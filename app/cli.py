@@ -87,7 +87,7 @@ def log_experiment_from_cli() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python3 -m app.cli mentor|experiment")
+        print("Usage: python3 -m app.cli mentor|experiment|memory")
         return
 
     command = sys.argv[1]
@@ -98,6 +98,12 @@ def main() -> None:
 
     if command == "experiment":
         log_experiment_from_cli()
+        return
+
+    if command == "memory":
+        memory = ConversationMemory()
+        memory.load()
+        print(memory.context() or "No memory saved.")
         return
 
     print(f"Unknown command: {command}")
