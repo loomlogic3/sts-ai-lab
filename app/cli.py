@@ -12,6 +12,7 @@ def run_mentor_chat() -> None:
     print("STS Mentor chat started.")
     print("Type /bye to exit.")
     print("Type /clear to clear memory.")
+    print("Type /memory to show memory.")
     print()
 
     while True:
@@ -27,6 +28,12 @@ def run_mentor_chat() -> None:
         if question.strip() == "/clear":
             memory.clear()
             print("Memory cleared.")
+            continue
+
+        if question.strip() == "/memory":
+            print()
+            print(memory.context() or "No memory saved.")
+            print()
             continue
 
         input_type = classify(question)
