@@ -1,5 +1,6 @@
 import sys
 
+from app.experiment_logger import log_experiment
 from app.input_classifier import InputType, classify
 from app.memory import ConversationMemory
 from app.mentor import ask_mentor
@@ -68,15 +69,35 @@ def run_mentor_chat() -> None:
         print()
 
 
+def log_experiment_from_cli() -> None:
+    title = input("Experiment title: ").strip()
+    notes = input("Experiment notes: ").strip()
+
+    if not title:
+        print("Experiment title is required.")
+        return
+
+    if not notes:
+        print("Experiment notes are required.")
+        return
+
+    path = log_experiment(title, notes)
+    print(f"Experiment saved: {path}")
+
+
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python3 -m app.cli mentor")
+        print("Usage: python3 -m app.cli mentor|experiment")
         return
 
     command = sys.argv[1]
 
     if command == "mentor":
         run_mentor_chat()
+        return
+
+    if command == "experiment":
+        log_experiment_from_cli()
         return
 
     print(f"Unknown command: {command}")
