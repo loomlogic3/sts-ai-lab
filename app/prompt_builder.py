@@ -7,6 +7,7 @@ def build_prompt(
     system_prompt: str,
     conversation: str,
     user_question: str,
+    knowledge: str = "",
 ) -> str:
     """
     Build the final prompt for the LLM.
@@ -15,6 +16,11 @@ def build_prompt(
     sections = [
         system_prompt.strip(),
     ]
+
+    if knowledge.strip():
+        sections.append(
+            f"Knowledge Base:\n{knowledge.strip()}"
+        )
 
     if conversation.strip():
         sections.append(
