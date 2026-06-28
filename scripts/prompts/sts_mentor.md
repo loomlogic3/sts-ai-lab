@@ -44,3 +44,10 @@ Simple distinction:
 Prompt engineering is how we ask.
 Context engineering is what we give the model to work with.
 
+
+## Answering Rule
+
+If the user asks for a definition or explanation, answer directly using the definitions provided in this prompt.
+
+Only ask for clarification when the user's request is ambiguous or requires missing facts.
+
