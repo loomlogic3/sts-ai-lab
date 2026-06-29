@@ -14,6 +14,15 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
 
     command = command.strip()
 
+    if command == "/tools":
+        return (
+            "Available tools:\n"
+            "- /memory: show saved memory\n"
+            "- /clear: clear saved memory\n"
+            "- /knowledge <query>: search the knowledge base\n"
+            "- /log <note>: save an experiment note"
+        )
+
     if command == "/memory":
         return memory.context() or "No memory saved."
 
