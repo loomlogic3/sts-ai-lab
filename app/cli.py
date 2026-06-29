@@ -1,5 +1,6 @@
 import sys
 
+from app.chat import start_chat
 from app.experiment_logger import log_experiment
 from app.input_classifier import InputType, classify
 from app.knowledge_search import search_knowledge
@@ -87,13 +88,20 @@ def log_experiment_from_cli() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python3 -m app.cli mentor|experiment|memory|knowledge|status")
+        print("Usage: python3 -m app.cli mentor|chat|experiment|memory|knowledge|status")
         return
 
     command = sys.argv[1]
 
     if command == "mentor":
         run_mentor_chat()
+        return
+
+    if command == "chat":
+        if len(sys.argv) < 3:
+            print("Usage: python3 -m app.cli chat <agent_name>")
+            return
+        start_chat(sys.argv[2])
         return
 
     if command == "experiment":
