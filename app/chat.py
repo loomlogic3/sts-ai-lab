@@ -2,8 +2,8 @@
 Generic chat runner for all STS AI agents.
 """
 
+from app.agent_config import load_agent_config
 from app.agent_registry import list_agents, load_agent_prompt
-from app.config import DEFAULT_MODEL
 from app.input_classifier import InputType, classify
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
@@ -18,6 +18,9 @@ def ask_agent(agent_name: str, question: str, memory: ConversationMemory) -> str
     Ask any registered STS AI agent a question.
     """
 
+    agent_config = load_agent_config(agent_name)
+    model = agent_config.get("model", "llama3.2:1b")
+
     system_prompt = load_agent_prompt(agent_name)
     conversation_context = memory.context()
     knowledge = search_knowledge(question)
@@ -29,7 +32,7 @@ def ask_agent(agent_name: str, question: str, memory: ConversationMemory) -> str
         knowledge=knowledge,
     )
 
-    raw_answer = run_ollama(DEFAULT_MODEL, full_prompt)
+    raw_answer = run_ollama(model, full_prompt)
     answer = clean_response(raw_answer)
 
     memory.add("User", question)
