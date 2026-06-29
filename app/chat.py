@@ -25,9 +25,16 @@ def ask_agent(agent_name: str, question: str, memory: ConversationMemory) -> str
     conversation_context = memory.context()
     knowledge = search_knowledge(question)
 
+    config_context = (
+        f"Agent configuration:\n"
+        f"- Agent name: {agent_name}\n"
+        f"- Model: {model}\n"
+        f"- Description: {agent_config.get('description', '')}\n"
+    )
+
     full_prompt = build_prompt(
         system_prompt=system_prompt,
-        conversation=conversation_context,
+        conversation=f"{config_context}\n{conversation_context}",
         user_question=question,
         knowledge=knowledge,
     )
@@ -80,6 +87,14 @@ def start_chat(agent_name: str) -> None:
         if tool_result is not None:
             print()
             print(tool_result)
+            print()
+            continue
+
+        agent_config = load_agent_config(agent_name)
+
+        if "what model" in question.lower() or "configured to use" in question.lower():
+            print()
+            print(f"{agent_name}: {agent_config.get('model', 'llama3.2:1b')}")
             print()
             continue
 
