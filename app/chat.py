@@ -1,52 +1,13 @@
 """
 Generic chat runner for all STS AI agents.
 """
-
 from app.agent_config import load_agent_config
-from app.agent_registry import list_agents, load_agent_prompt
+
+from app.agent_registry import list_agents
+from app.ai_engine import answer_with_agent
 from app.input_classifier import InputType, classify
-from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
-from app.ollama_client import run_ollama
-from app.prompt_builder import build_prompt
-from app.response_processor import clean_response
 from app.tool_router import route_tool
-
-
-def ask_agent(agent_name: str, question: str, memory: ConversationMemory) -> str:
-    """
-    Ask any registered STS AI agent a question.
-    """
-
-    agent_config = load_agent_config(agent_name)
-    model = agent_config.get("model", "llama3.2:1b")
-
-    system_prompt = load_agent_prompt(agent_name)
-    conversation_context = memory.context()
-    knowledge = search_knowledge(question)
-
-    config_context = (
-        f"Agent configuration:\n"
-        f"- Agent name: {agent_name}\n"
-        f"- Model: {model}\n"
-        f"- Description: {agent_config.get('description', '')}\n"
-    )
-
-    full_prompt = build_prompt(
-        system_prompt=system_prompt,
-        conversation=f"{config_context}\n{conversation_context}",
-        user_question=question,
-        knowledge=knowledge,
-    )
-
-    raw_answer = run_ollama(model, full_prompt)
-    answer = clean_response(raw_answer)
-
-    memory.add("User", question)
-    memory.add(agent_name, answer)
-    memory.save()
-
-    return answer
 
 
 def start_chat(agent_name: str) -> None:
@@ -108,7 +69,7 @@ def start_chat(agent_name: str) -> None:
             print()
             continue
 
-        answer = ask_agent(agent_name, question, memory)
+        answer = answer_with_agent(agent_name, question, memory)
 
         print()
         print(f"{agent_name}: {answer}")
