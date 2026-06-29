@@ -1,0 +1,5 @@
+{
+    "model": "llama3.2:1b",
+    "temperature": 0.2,
+    "description": "Coding assistant for Python, FastAPI, CLI tools, and AI systems."
+}
