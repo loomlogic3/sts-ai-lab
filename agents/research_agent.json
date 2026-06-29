@@ -1,5 +1,5 @@
 {
-    "model": "llama3.2:1b",
+    "model": "sts-fast",
     "temperature": 0.2,
     "description": "Research planning and AI experimentation."
 }
