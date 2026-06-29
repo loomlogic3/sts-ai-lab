@@ -5,6 +5,7 @@ from app.input_classifier import InputType, classify
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
 from app.mentor import ask_mentor
+from app.tool_router import route_tool
 
 
 def run_mentor_chat() -> None:
@@ -27,14 +28,11 @@ def run_mentor_chat() -> None:
             print("Goodbye.")
             break
 
-        if question.strip() == "/clear":
-            memory.clear()
-            print("Memory cleared.")
-            continue
+        tool_result = route_tool(question, memory)
 
-        if question.strip() == "/memory":
+        if tool_result is not None:
             print()
-            print(memory.context() or "No memory saved.")
+            print(tool_result)
             print()
             continue
 
