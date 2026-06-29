@@ -24,7 +24,7 @@ def answer_with_agent(
     model = agent_config.get("model", "llama3.2:1b")
 
     system_prompt = load_agent_prompt(agent_name)
-    conversation_context = memory.context()
+    conversation_context = ''
     knowledge = search_knowledge(question)
 
     config_context = (
