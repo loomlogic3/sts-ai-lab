@@ -18,6 +18,11 @@ def run_ollama(model: str, prompt: str) -> str:
         "model": model,
         "prompt": prompt,
         "stream": False,
+        "options": {
+            "num_ctx": 1024,
+            "num_predict": 120,
+            "temperature": 0.2
+        },
     }
 
     request = urllib.request.Request(
