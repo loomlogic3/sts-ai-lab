@@ -59,6 +59,18 @@ def start_chat(agent_name: str) -> None:
             print()
             continue
 
+        capability_question = question.lower()
+
+        if (
+            "what kind of work" in capability_question
+            or "what can you help" in capability_question
+            or "what do you help" in capability_question
+        ):
+            print()
+            print(f"{agent_name}: {agent_config.get('description', 'I help with STS AI Lab tasks.')}")
+            print()
+            continue
+
         input_type = classify(question)
 
         if input_type == InputType.STATEMENT:
