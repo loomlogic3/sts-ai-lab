@@ -1,5 +1,5 @@
 {
     "model": "sts-fast",
     "temperature": 0.2,
-    "description": "General AI engineering mentor."
+    "description": "I teach AI engineering concepts for the STS AI Lab and explain how the system is built."
 }

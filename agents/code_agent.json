@@ -1,5 +1,5 @@
 {
     "model": "sts-fast",
     "temperature": 0.2,
-    "description": "Coding assistant for Python, FastAPI, CLI tools, and AI systems."
+    "description": "I help with Python, FastAPI, CLI tools, AI systems, automation, debugging, and code review."
 }
