@@ -1,43 +1,33 @@
-import subprocess
+"""
+Ollama HTTP client for STS AI Engine.
+"""
+
+import json
+import urllib.request
+
+
+OLLAMA_GENERATE_URL = "http://127.0.0.1:11434/api/generate"
 
 
 def run_ollama(model: str, prompt: str) -> str:
     """
-    Send a prompt to Ollama and return the model response.
+    Send a prompt to Ollama using the HTTP API.
     """
 
-    result = subprocess.run(
-        ["ollama", "run", model, prompt],
-        capture_output=True,
-        text=True,
-        check=True,
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "stream": False,
+    }
+
+    request = urllib.request.Request(
+        OLLAMA_GENERATE_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
     )
 
-    return result.stdout.strip()
+    with urllib.request.urlopen(request, timeout=600) as response:
+        data = json.loads(response.read().decode("utf-8"))
 
-
-def stream_ollama(model: str, prompt: str) -> str:
-    """
-    Stream a prompt response from Ollama and return the full response.
-    """
-
-    process = subprocess.Popen(
-        ["ollama", "run", model, prompt],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        text=True,
-    )
-
-    output = ""
-
-    if process.stdout:
-        for chunk in process.stdout:
-            print(chunk, end="", flush=True)
-            output += chunk
-
-    process.wait()
-
-    if process.returncode != 0:
-        raise RuntimeError(f"Ollama exited with code {process.returncode}")
-
-    return output.strip()
+    return data.get("response", "").strip()
