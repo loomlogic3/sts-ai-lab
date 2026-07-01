@@ -5,6 +5,7 @@ Simple tool router for the STS AI Engine.
 from app.experiment_logger import log_experiment
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
+from app.tool_registry import format_tools
 
 
 def route_tool(command: str, memory: ConversationMemory) -> str | None:
@@ -15,13 +16,7 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
     command = command.strip()
 
     if command == "/tools":
-        return (
-            "Available tools:\n"
-            "- /memory: show saved memory\n"
-            "- /clear: clear saved memory\n"
-            "- /knowledge <query>: search the knowledge base\n"
-            "- /log <note>: save an experiment note"
-        )
+        return format_tools()
 
     if command == "/memory":
         return memory.context() or "No memory saved."
