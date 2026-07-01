@@ -35,6 +35,11 @@ def list_tools() -> list[dict]:
             "description": "List experiment logs.",
         },
         {
+            "name": "read",
+            "command": "/read <file_path>",
+            "description": "Read a project file safely.",
+        },
+        {
             "name": "tools",
             "command": "/tools",
             "description": "List available tools.",
