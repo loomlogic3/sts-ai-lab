@@ -7,6 +7,7 @@ from app.experiments import print_experiments
 from app.input_classifier import InputType, classify
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
+from app.models import print_models
 from app.mentor import ask_mentor
 from app.status import lab_status
 from app.tool_router import route_tool
@@ -90,7 +91,7 @@ def log_experiment_from_cli() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python3 -m app.cli mentor|chat|agents|experiment|experiments|memory|knowledge|status")
+        print("Usage: python3 -m app.cli mentor|chat|agents|models|experiment|experiments|memory|knowledge|status")
         return
 
     command = sys.argv[1]
@@ -116,6 +117,10 @@ def main() -> None:
 
     if command == "experiments":
         print_experiments()
+        return
+
+    if command == "models":
+        print_models()
         return
 
     if command == "memory":
