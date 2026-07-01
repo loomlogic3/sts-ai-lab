@@ -12,6 +12,7 @@ from app.mentor import ask_mentor
 from app.status import lab_status
 from app.tool_registry import format_tools
 from app.tool_router import route_tool
+from app.project import project_summary
 
 
 def run_mentor_chat() -> None:
@@ -92,7 +93,7 @@ def log_experiment_from_cli() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python3 -m app.cli mentor|chat|agents|models|experiment|experiments|memory|knowledge|tools|status")
+        print("Usage: python3 -m app.cli mentor|chat|agents|models|experiment|experiments|memory|knowledge|tools|project|status")
         return
 
     command = sys.argv[1]
@@ -140,6 +141,10 @@ def main() -> None:
 
     if command == "tools":
         print(format_tools())
+        return
+
+    if command == "project":
+        print(project_summary())
         return
 
     if command == "status":
