@@ -60,3 +60,36 @@ def project_tree(max_depth: int = 2) -> str:
         lines.append(f"{prefix}{path.name}{marker}")
 
     return "\n".join(lines) or "No files found."
+
+
+def search_files(keyword: str) -> str:
+    """
+    Safely search project files for a keyword.
+    """
+
+    keyword = keyword.strip()
+
+    if not keyword:
+        return "Usage: /search <keyword>"
+
+    matches = []
+
+    for path in sorted(Path(".").rglob("*")):
+        if any(part in BLOCKED_PARTS for part in path.parts):
+            continue
+
+        if not path.is_file():
+            continue
+
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+
+        if keyword.lower() in text.lower():
+            matches.append(str(path))
+
+    if not matches:
+        return f"No matches found for: {keyword}"
+
+    return "\n".join(matches)

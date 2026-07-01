@@ -45,6 +45,11 @@ def list_tools() -> list[dict]:
             "description": "Show project structure safely.",
         },
         {
+            "name": "search",
+            "command": "/search <keyword>",
+            "description": "Search safe project files.",
+        },
+        {
             "name": "tools",
             "command": "/tools",
             "description": "List available tools.",
