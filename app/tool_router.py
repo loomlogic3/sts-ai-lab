@@ -4,7 +4,7 @@ Simple tool router for the STS AI Engine.
 
 from app.experiment_logger import log_experiment
 from app.experiments import list_experiments
-from app.file_tools import project_tree, read_file, search_files
+from app.file_tools import grep_files, project_tree, read_file, search_files
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
 from app.tool_registry import format_tools
@@ -33,6 +33,10 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
     if command.startswith("/search "):
         keyword = command.replace("/search ", "", 1).strip()
         return search_files(keyword)
+
+    if command.startswith("/grep "):
+        keyword = command.replace("/grep ", "", 1).strip()
+        return grep_files(keyword)
 
     if command.startswith("/read "):
         file_path = command.replace("/read ", "", 1).strip()

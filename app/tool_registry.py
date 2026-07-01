@@ -50,6 +50,11 @@ def list_tools() -> list[dict]:
             "description": "Search safe project files.",
         },
         {
+            "name": "grep",
+            "command": "/grep <keyword>",
+            "description": "Search files and show matching line numbers.",
+        },
+        {
             "name": "tools",
             "command": "/tools",
             "description": "List available tools.",

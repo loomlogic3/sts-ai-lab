@@ -93,3 +93,37 @@ def search_files(keyword: str) -> str:
         return f"No matches found for: {keyword}"
 
     return "\n".join(matches)
+
+
+def grep_files(keyword: str) -> str:
+    """
+    Search safe project files and return matching lines with line numbers.
+    """
+
+    keyword = keyword.strip()
+
+    if not keyword:
+        return "Usage: /grep <keyword>"
+
+    matches = []
+
+    for path in sorted(Path(".").rglob("*")):
+        if any(part in BLOCKED_PARTS for part in path.parts):
+            continue
+
+        if not path.is_file():
+            continue
+
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except UnicodeDecodeError:
+            continue
+
+        for line_number, line in enumerate(lines, start=1):
+            if keyword.lower() in line.lower():
+                matches.append(f"{path}:{line_number}: {line.strip()}")
+
+    if not matches:
+        return f"No matches found for: {keyword}"
+
+    return "\n".join(matches[:50])
