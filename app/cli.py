@@ -10,6 +10,7 @@ from app.memory import ConversationMemory
 from app.models import print_models
 from app.mentor import ask_mentor
 from app.status import lab_status
+from app.tool_registry import format_tools
 from app.tool_router import route_tool
 
 
@@ -91,7 +92,7 @@ def log_experiment_from_cli() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python3 -m app.cli mentor|chat|agents|models|experiment|experiments|memory|knowledge|status")
+        print("Usage: python3 -m app.cli mentor|chat|agents|models|experiment|experiments|memory|knowledge|tools|status")
         return
 
     command = sys.argv[1]
@@ -135,6 +136,10 @@ def main() -> None:
             print("Usage: python3 -m app.cli knowledge <query>")
             return
         print(search_knowledge(query) or "No knowledge found.")
+        return
+
+    if command == "tools":
+        print(format_tools())
         return
 
     if command == "status":
