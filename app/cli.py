@@ -3,6 +3,7 @@ import sys
 from app.agents import print_agents
 from app.chat import start_chat
 from app.experiment_logger import log_experiment
+from app.experiments import print_experiments
 from app.input_classifier import InputType, classify
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
@@ -89,7 +90,7 @@ def log_experiment_from_cli() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python3 -m app.cli mentor|chat|agents|experiment|memory|knowledge|status")
+        print("Usage: python3 -m app.cli mentor|chat|agents|experiment|experiments|memory|knowledge|status")
         return
 
     command = sys.argv[1]
@@ -111,6 +112,10 @@ def main() -> None:
 
     if command == "experiment":
         log_experiment_from_cli()
+        return
+
+    if command == "experiments":
+        print_experiments()
         return
 
     if command == "memory":
