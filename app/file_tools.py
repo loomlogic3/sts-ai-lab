@@ -33,3 +33,30 @@ def read_file(path_text: str) -> str:
         return f"Not a file: {path}"
 
     return path.read_text(encoding="utf-8")
+
+
+def project_tree(max_depth: int = 2) -> str:
+    """
+    Safely list project files up to a limited depth.
+    """
+
+    root = Path(".")
+    lines = []
+
+    for path in sorted(root.rglob("*")):
+        if any(part in BLOCKED_PARTS for part in path.parts):
+            continue
+
+        if path.name.startswith(".DS_Store"):
+            continue
+
+        depth = len(path.parts)
+
+        if depth > max_depth:
+            continue
+
+        prefix = "  " * (depth - 1)
+        marker = "/" if path.is_dir() else ""
+        lines.append(f"{prefix}{path.name}{marker}")
+
+    return "\n".join(lines) or "No files found."
