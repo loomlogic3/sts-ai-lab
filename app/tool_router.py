@@ -3,6 +3,7 @@ Simple tool router for the STS AI Engine.
 """
 
 from app.experiment_logger import log_experiment
+from app.experiments import list_experiments
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
 from app.tool_registry import format_tools
@@ -24,6 +25,12 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
     if command == "/clear":
         memory.clear()
         return "Memory cleared."
+
+    if command == "/experiments":
+        experiments = list_experiments()
+        if not experiments:
+            return "No experiments found."
+        return "\n".join(path.name for path in experiments)
 
     if command.startswith("/knowledge "):
         query = command.replace("/knowledge ", "", 1).strip()

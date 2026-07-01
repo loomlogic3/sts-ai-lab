@@ -30,6 +30,11 @@ def list_tools() -> list[dict]:
             "description": "Save an experiment note.",
         },
         {
+            "name": "experiments",
+            "command": "/experiments",
+            "description": "List experiment logs.",
+        },
+        {
             "name": "tools",
             "command": "/tools",
             "description": "List available tools.",
