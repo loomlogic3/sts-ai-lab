@@ -55,6 +55,11 @@ def list_tools() -> list[dict]:
             "description": "Search files and show matching line numbers.",
         },
         {
+            "name": "todos",
+            "command": "/todos",
+            "description": "Find TODO/FIXME notes.",
+        },
+        {
             "name": "explain",
             "command": "/explain <file_path>",
             "description": "Explain a project file.",

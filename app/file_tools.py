@@ -127,3 +127,33 @@ def grep_files(keyword: str) -> str:
         return f"No matches found for: {keyword}"
 
     return "\n".join(matches[:50])
+
+
+def find_todos() -> str:
+    """
+    Find TODO/FIXME notes in safe project files.
+    """
+
+    keywords = ("TODO", "FIXME")
+    matches = []
+
+    for path in sorted(Path(".").rglob("*")):
+        if any(part in BLOCKED_PARTS for part in path.parts):
+            continue
+
+        if not path.is_file():
+            continue
+
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except UnicodeDecodeError:
+            continue
+
+        for line_number, line in enumerate(lines, start=1):
+            if any(keyword.lower() in line.lower() for keyword in keywords):
+                matches.append(f"{path}:{line_number}: {line.strip()}")
+
+    if not matches:
+        return "No TODO/FIXME notes found."
+
+    return "\n".join(matches[:50])
