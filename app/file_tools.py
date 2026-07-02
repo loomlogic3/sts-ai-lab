@@ -150,7 +150,12 @@ def find_todos() -> str:
             continue
 
         for line_number, line in enumerate(lines, start=1):
-            if any(keyword.lower() in line.lower() for keyword in keywords):
+            line_lower = line.lower()
+
+            if "find_todos" in line_lower or "todo/fixme" in line_lower:
+                continue
+
+            if any(keyword.lower() in line_lower for keyword in keywords):
                 matches.append(f"{path}:{line_number}: {line.strip()}")
 
     if not matches:
