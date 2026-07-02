@@ -10,6 +10,7 @@ from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
 from app.tool_registry import format_tools
 from app.project_index import find_symbol, format_project_index, project_map
+from app.change_planner import plan_change
 
 
 def route_tool(command: str, memory: ConversationMemory) -> str | None:
@@ -42,6 +43,10 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
 
     if command == "/todos":
         return find_todos()
+
+    if command.startswith("/plan-change "):
+        goal = command.replace("/plan-change ", "", 1).strip()
+        return plan_change(goal)
 
     if command.startswith("/read "):
         file_path = command.replace("/read ", "", 1).strip()

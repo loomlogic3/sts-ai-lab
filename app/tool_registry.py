@@ -60,6 +60,11 @@ def list_tools() -> list[dict]:
             "description": "Find TODO/FIXME notes.",
         },
         {
+            "name": "plan-change",
+            "command": "/plan-change <goal>",
+            "description": "Create a read-only change plan.",
+        },
+        {
             "name": "explain",
             "command": "/explain <file_path>",
             "description": "Explain a project file.",
