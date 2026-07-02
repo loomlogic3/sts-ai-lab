@@ -85,6 +85,11 @@ def list_tools() -> list[dict]:
             "description": "Build a Python project index.",
         },
         {
+            "name": "project-map",
+            "command": "/project-map",
+            "description": "Show a fast architecture map.",
+        },
+        {
             "name": "where",
             "command": "/where <symbol>",
             "description": "Find where a Python symbol is indexed.",

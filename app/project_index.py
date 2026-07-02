@@ -126,3 +126,44 @@ def find_symbol(symbol: str) -> str:
         return f"No indexed symbol found for: {symbol}"
 
     return "\n".join(matches)
+
+
+def project_map() -> str:
+    """
+    Build a simple architecture map from the Python project index.
+    """
+
+    index = build_project_index()
+
+    lines = [
+        "STS AI Lab Project Map",
+        "",
+        "Core Modules:",
+    ]
+
+    for item in index:
+        file_path = item["file"]
+
+        if file_path in {
+            "app/cli.py",
+            "app/chat.py",
+            "app/ai_engine.py",
+            "app/tool_router.py",
+            "app/tool_registry.py",
+            "app/project_index.py",
+            "app/code_understanding.py",
+            "app/ollama_client.py",
+        }:
+            lines.append(f"- {file_path}")
+
+    lines.extend([
+        "",
+        "Likely Flow:",
+        "CLI -> Chat -> Tool Router -> Python Tools",
+        "CLI -> Chat -> AI Engine -> Ollama Client",
+        "",
+        "Note:",
+        "- This is a fast structural map generated from project files.",
+    ])
+
+    return "\n".join(lines)

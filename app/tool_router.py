@@ -9,7 +9,7 @@ from app.file_tools import grep_files, project_tree, read_file, search_files
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
 from app.tool_registry import format_tools
-from app.project_index import find_symbol, format_project_index
+from app.project_index import find_symbol, format_project_index, project_map
 
 
 def route_tool(command: str, memory: ConversationMemory) -> str | None:
@@ -66,6 +66,9 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
 
     if command == "/index":
         return format_project_index()
+
+    if command == "/project-map":
+        return project_map()
 
     if command.startswith("/where "):
         symbol = command.replace("/where ", "", 1).strip()
