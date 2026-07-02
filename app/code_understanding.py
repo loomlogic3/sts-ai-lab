@@ -173,3 +173,33 @@ def list_python_imports(path: str) -> str:
         return "No imports found."
 
     return "\n".join(f"- {name}" for name in sorted(set(imports)))
+
+
+def list_python_classes(path: str) -> str:
+    """
+    List classes in a Python file.
+    """
+
+    source = read_file(path)
+
+    if source.startswith("Blocked") or source.startswith("File not found"):
+        return source
+
+    if not path.endswith(".py"):
+        return "This tool only supports Python files."
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as error:
+        return f"Could not parse Python file: {error}"
+
+    classes = []
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            classes.append(node.name)
+
+    if not classes:
+        return "No classes found."
+
+    return "\n".join(f"- {name}" for name in sorted(classes))
