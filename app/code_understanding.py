@@ -109,3 +109,33 @@ SOURCE:
 """
 
     return run_ollama(model, prompt)
+
+
+def list_python_functions(path: str) -> str:
+    """
+    List functions in a Python file.
+    """
+
+    source = read_file(path)
+
+    if source.startswith("Blocked") or source.startswith("File not found"):
+        return source
+
+    if not path.endswith(".py"):
+        return "This tool only supports Python files."
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as error:
+        return f"Could not parse Python file: {error}"
+
+    functions = []
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            functions.append(node.name)
+
+    if not functions:
+        return "No functions found."
+
+    return "\n".join(f"- {name}" for name in sorted(functions))
