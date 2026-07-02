@@ -139,3 +139,37 @@ def list_python_functions(path: str) -> str:
         return "No functions found."
 
     return "\n".join(f"- {name}" for name in sorted(functions))
+
+
+def list_python_imports(path: str) -> str:
+    """
+    List imports in a Python file.
+    """
+
+    source = read_file(path)
+
+    if source.startswith("Blocked") or source.startswith("File not found"):
+        return source
+
+    if not path.endswith(".py"):
+        return "This tool only supports Python files."
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as error:
+        return f"Could not parse Python file: {error}"
+
+    imports = []
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imports.append(alias.name)
+
+        if isinstance(node, ast.ImportFrom):
+            imports.append(node.module or "")
+
+    if not imports:
+        return "No imports found."
+
+    return "\n".join(f"- {name}" for name in sorted(set(imports)))
