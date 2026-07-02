@@ -203,3 +203,27 @@ def list_python_classes(path: str) -> str:
         return "No classes found."
 
     return "\n".join(f"- {name}" for name in sorted(classes))
+
+
+def analyze_python_file(path: str) -> str:
+    """
+    Produce a fast analysis report for a Python file.
+    """
+
+    lines = [
+        f"Analysis: {path}",
+        "",
+        "Imports:",
+        list_python_imports(path),
+        "",
+        "Classes:",
+        list_python_classes(path),
+        "",
+        "Functions:",
+        list_python_functions(path),
+        "",
+        "Explanation:",
+        explain_file(path),
+    ]
+
+    return "\n".join(lines)

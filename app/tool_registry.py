@@ -60,6 +60,11 @@ def list_tools() -> list[dict]:
             "description": "Explain a project file.",
         },
         {
+            "name": "analyze",
+            "command": "/analyze <file.py>",
+            "description": "Analyze a Python file.",
+        },
+        {
             "name": "functions",
             "command": "/functions <file.py>",
             "description": "List Python functions in a file.",
