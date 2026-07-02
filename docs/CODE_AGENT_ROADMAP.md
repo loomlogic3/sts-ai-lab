@@ -75,3 +75,20 @@ Next stages remain:
 3. Human-approved patch application.
 4. Test running.
 5. Git assistance after approval.
+
+---
+
+## Current Project Intelligence Tools
+
+The Code Agent now includes project-level intelligence tools.
+
+Available tools:
+
+- `/project-map` — Show a fast architecture map of core modules and likely flow.
+- `/todos` — Find TODO/FIXME notes across safe project files.
+
+## Notes
+
+These tools continue the read-only approach.
+
+They help the Code Agent understand the project structure and pending work before any change planning or editing is introduced.
