@@ -9,6 +9,7 @@ from app.file_tools import grep_files, project_tree, read_file, search_files
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
 from app.tool_registry import format_tools
+from app.project_index import format_project_index
 
 
 def route_tool(command: str, memory: ConversationMemory) -> str | None:
@@ -50,6 +51,9 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
     if command.startswith("/functions "):
         file_path = command.replace("/functions ", "", 1).strip()
         return list_python_functions(file_path)
+
+    if command == "/index":
+        return format_project_index()
 
     if command == "/experiments":
         experiments = list_experiments()

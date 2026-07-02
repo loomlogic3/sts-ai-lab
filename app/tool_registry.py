@@ -65,6 +65,11 @@ def list_tools() -> list[dict]:
             "description": "List Python functions in a file.",
         },
         {
+            "name": "index",
+            "command": "/index",
+            "description": "Build a Python project index.",
+        },
+        {
             "name": "tools",
             "command": "/tools",
             "description": "List available tools.",
