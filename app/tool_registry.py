@@ -70,6 +70,11 @@ def list_tools() -> list[dict]:
             "description": "Build a Python project index.",
         },
         {
+            "name": "where",
+            "command": "/where <symbol>",
+            "description": "Find where a Python symbol is indexed.",
+        },
+        {
             "name": "tools",
             "command": "/tools",
             "description": "List available tools.",

@@ -96,3 +96,33 @@ def format_project_index() -> str:
         lines.append("")
 
     return "\n".join(lines)
+
+
+def find_symbol(symbol: str) -> str:
+    """
+    Find where a symbol appears in the Python project index.
+    """
+
+    symbol = symbol.strip()
+
+    if not symbol:
+        return "Usage: /where <symbol>"
+
+    matches = []
+
+    for item in build_project_index():
+        file_path = item["file"]
+
+        if symbol in item["functions"]:
+            matches.append(f"{symbol} function defined in {file_path}")
+
+        if symbol in item["classes"]:
+            matches.append(f"{symbol} class defined in {file_path}")
+
+        if symbol in item["imports"]:
+            matches.append(f"{symbol} imported in {file_path}")
+
+    if not matches:
+        return f"No indexed symbol found for: {symbol}"
+
+    return "\n".join(matches)
