@@ -2,7 +2,7 @@
 Read-only change planner for STS AI Lab.
 """
 
-from app.project_index import format_project_index
+from app.goal_analyzer import relevant_files
 
 
 def plan_change(goal: str) -> str:
@@ -15,21 +15,37 @@ def plan_change(goal: str) -> str:
     if not goal:
         return "Usage: /plan-change <goal>"
 
-    project_index = format_project_index()
+    files = relevant_files(goal)
 
-    return (
-        "Change Plan\n\n"
-        f"Goal: {goal}\n\n"
-        "Current Project Context:\n"
-        f"{project_index}\n\n"
-        "Suggested Approach:\n"
-        "1. Identify the module responsible for the requested behavior.\n"
-        "2. Inspect the relevant files with /read, /grep, /functions, or /analyze.\n"
-        "3. Decide which files would likely need changes.\n"
-        "4. Write a human-readable plan before editing anything.\n"
-        "5. Do not modify files until the user explicitly approves a patch.\n\n"
-        "Safety:\n"
-        "- This is a planning-only tool.\n"
-        "- No files were edited.\n"
-        "- No commands were executed.\n"
+    lines = [
+        "Change Plan",
+        "",
+        f"Goal: {goal}",
+        "",
+        "Relevant Files:",
+    ]
+
+    if files:
+        lines.extend(f"- {file}" for file in files)
+    else:
+        lines.append("- No specific files identified yet.")
+        lines.append("- Use /search, /grep, /index, or /project-map to inspect further.")
+
+    lines.extend(
+        [
+            "",
+            "Suggested Approach:",
+            "1. Inspect the relevant files.",
+            "2. Confirm the correct module responsibilities.",
+            "3. Identify likely changes before editing.",
+            "4. Prepare a patch proposal only after review.",
+            "5. Apply changes only with explicit approval.",
+            "",
+            "Safety:",
+            "- Planning only.",
+            "- No files were edited.",
+            "- No commands were executed.",
+        ]
     )
+
+    return "\n".join(lines)
