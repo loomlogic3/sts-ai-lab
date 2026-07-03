@@ -11,6 +11,7 @@ from app.memory import ConversationMemory
 from app.tool_registry import format_tools
 from app.project_index import find_symbol, format_project_index, project_map
 from app.change_planner import plan_change
+from app.risk_analyzer import assess_risk
 
 
 def route_tool(command: str, memory: ConversationMemory) -> str | None:
@@ -47,6 +48,10 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
     if command.startswith("/plan-change "):
         goal = command.replace("/plan-change ", "", 1).strip()
         return plan_change(goal)
+
+    if command.startswith("/risk "):
+        goal = command.replace("/risk ", "", 1).strip()
+        return assess_risk(goal)
 
     if command.startswith("/read "):
         file_path = command.replace("/read ", "", 1).strip()

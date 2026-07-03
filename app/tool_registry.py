@@ -65,6 +65,11 @@ def list_tools() -> list[dict]:
             "description": "Create a read-only change plan.",
         },
         {
+            "name": "risk",
+            "command": "/risk <goal>",
+            "description": "Assess change risk before planning.",
+        },
+        {
             "name": "explain",
             "command": "/explain <file_path>",
             "description": "Explain a project file.",
