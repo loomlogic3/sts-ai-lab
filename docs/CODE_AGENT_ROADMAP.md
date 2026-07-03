@@ -92,3 +92,23 @@ Available tools:
 These tools continue the read-only approach.
 
 They help the Code Agent understand the project structure and pending work before any change planning or editing is introduced.
+
+---
+
+## Current Change Planning Tools
+
+The Code Agent now includes read-only planning tools.
+
+Available tools:
+
+- `/risk <goal>` — Assess change risk before planning.
+- `/plan-change <goal>` — Identify relevant files and suggest a safe approach.
+- `/proposal <goal>` — Combine risk assessment and change plan into one read-only proposal.
+
+## Safety Notes
+
+These tools do not edit files.
+
+They support the STS Human-Supervised Intelligence Architecture:
+
+Observe → Understand → Plan → Human Approval → Execute → Verify
