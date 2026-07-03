@@ -13,6 +13,7 @@ from app.project_index import find_symbol, format_project_index, project_map
 from app.change_planner import plan_change
 from app.risk_analyzer import assess_risk
 from app.proposal import create_proposal
+from app.patch_proposal import propose_patch
 
 
 def route_tool(command: str, memory: ConversationMemory) -> str | None:
@@ -57,6 +58,10 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
     if command.startswith("/proposal "):
         goal = command.replace("/proposal ", "", 1).strip()
         return create_proposal(goal)
+
+    if command.startswith("/propose-patch "):
+        goal = command.replace("/propose-patch ", "", 1).strip()
+        return propose_patch(goal)
 
     if command.startswith("/read "):
         file_path = command.replace("/read ", "", 1).strip()
