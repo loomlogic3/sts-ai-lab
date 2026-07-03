@@ -112,3 +112,26 @@ These tools do not edit files.
 They support the STS Human-Supervised Intelligence Architecture:
 
 Observe → Understand → Plan → Human Approval → Execute → Verify
+
+---
+
+## Current Patch Proposal Tools
+
+The Code Agent now includes read-only patch proposal support.
+
+Available tools:
+
+- `/propose-patch <goal>` — Create a read-only patch proposal with:
+  - risk assessment
+  - relevant files
+  - suggested approach
+  - likely file-level changes
+  - approval reminder
+
+## Safety Notes
+
+The patch proposal tool does not edit files.
+
+It does not create files, apply patches, run tests, or commit changes.
+
+This is the bridge between planning and future human-approved patching.
