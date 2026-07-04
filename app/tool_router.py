@@ -17,6 +17,7 @@ from app.patch_proposal import propose_patch
 from app.patch_drafter import draft_patch
 from app.approval import approval_required
 from app.design_artifact import create_design
+from app.command_registry import get_handler
 
 
 def route_tool(command: str, memory: ConversationMemory) -> str | None:
@@ -28,6 +29,14 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
 
     if command == "/tools":
         return format_tools()
+
+    parts = command.split(" ", 1)
+    command_name = parts[0]
+    args = parts[1] if len(parts) > 1 else ""
+
+    handler = get_handler(command_name)
+    if handler:
+        return handler(args)
 
     if command == "/memory":
         return memory.context() or "No memory saved."
