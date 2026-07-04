@@ -16,6 +16,7 @@ from app.proposal import create_proposal
 from app.patch_proposal import propose_patch
 from app.patch_drafter import draft_patch
 from app.approval import approval_required
+from app.design_artifact import create_design
 
 
 def route_tool(command: str, memory: ConversationMemory) -> str | None:
@@ -72,6 +73,10 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
     if command.startswith("/approval-required "):
         goal = command.replace("/approval-required ", "", 1).strip()
         return approval_required(goal)
+
+    if command.startswith("/design "):
+        goal = command.replace("/design ", "", 1).strip()
+        return create_design(goal)
 
     if command.startswith("/read "):
         file_path = command.replace("/read ", "", 1).strip()

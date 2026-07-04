@@ -90,6 +90,11 @@ def list_tools() -> list[dict]:
             "description": "Determine whether a requested change requires explicit approval.",
         },
         {
+            "name": "design",
+            "command": "/design <goal>",
+            "description": "Create a read-only engineering design.",
+        },
+        {
             "name": "explain",
             "command": "/explain <file_path>",
             "description": "Explain a project file.",
