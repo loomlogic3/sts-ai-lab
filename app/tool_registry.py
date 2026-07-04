@@ -80,6 +80,11 @@ def list_tools() -> list[dict]:
             "description": "Draft a read-only patch proposal.",
         },
         {
+            "name": "draft-patch",
+            "command": "/draft-patch <goal>",
+            "description": "Draft a human-readable patch plan without applying it.",
+        },
+        {
             "name": "explain",
             "command": "/explain <file_path>",
             "description": "Explain a project file.",
