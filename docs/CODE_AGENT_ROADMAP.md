@@ -163,3 +163,50 @@ It only explains:
 This continues the sequence:
 
 Observe → Understand → Plan → Human Approval → Execute → Verify
+
+---
+
+## Current Approval Layer
+
+The Code Agent now includes an explicit approval gate.
+
+Available tool:
+
+- `/approval-required <goal>` — Determine whether a requested change requires explicit human approval.
+
+## Approval Policy
+
+The Approval Layer is separate from the Risk Layer.
+
+Risk answers:
+
+- How dangerous is this change?
+
+Approval answers:
+
+- May the system continue?
+
+Current policy:
+
+- Every code change requires explicit human approval.
+- The system cannot execute changes autonomously.
+- Planning and drafting remain read-only.
+
+This implements the STS Human-Supervised Intelligence Architecture:
+
+Observe
+↓
+Understand
+↓
+Plan
+↓
+Human Approval
+↓
+Execute
+↓
+Verify
+
+Principle:
+
+"Before you add power, add more control."
+
