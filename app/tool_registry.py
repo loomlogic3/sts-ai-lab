@@ -85,6 +85,11 @@ def list_tools() -> list[dict]:
             "description": "Draft a human-readable patch plan without applying it.",
         },
         {
+            "name": "approval-required",
+            "command": "/approval-required <goal>",
+            "description": "Determine whether a requested change requires explicit approval.",
+        },
+        {
             "name": "explain",
             "command": "/explain <file_path>",
             "description": "Explain a project file.",
