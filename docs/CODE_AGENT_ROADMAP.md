@@ -135,3 +135,31 @@ The patch proposal tool does not edit files.
 It does not create files, apply patches, run tests, or commit changes.
 
 This is the bridge between planning and future human-approved patching.
+
+---
+
+## Current Patch Drafting Tools
+
+The Code Agent now includes a read-only patch drafting stage.
+
+Available tools:
+
+- `/draft-patch <goal>` — Draft a human-readable patch plan without applying it.
+
+## Safety Notes
+
+The patch drafter does not edit files.
+
+It does not generate executable patches yet.
+
+It only explains:
+
+- the goal
+- risk level
+- likely files involved
+- intended file-level changes
+- reminder that human approval is required
+
+This continues the sequence:
+
+Observe → Understand → Plan → Human Approval → Execute → Verify
