@@ -4,7 +4,7 @@ Command registry for STS AI Lab.
 Maps command names to handler functions.
 """
 
-from app.command_handlers import tools_handler
+from app.command_handlers import tools_handler, tree_handler
 
 
 COMMANDS = {}
@@ -32,3 +32,5 @@ def list_registered_commands():
 
 
 register("/tools", tools_handler)
+
+register("/tree", tree_handler)
