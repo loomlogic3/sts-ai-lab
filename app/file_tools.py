@@ -5,6 +5,8 @@ Read-only file tools for STS AI Lab.
 from pathlib import Path
 
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 BLOCKED_PARTS = {
     ".env",
     ".git",
@@ -13,24 +15,45 @@ BLOCKED_PARTS = {
 }
 
 
+def safe_project_path(path_text: str) -> Path | None:
+    """
+    Resolve a user path and ensure it stays inside the project root.
+    """
+
+    raw_path = Path(path_text).expanduser()
+
+    if raw_path.is_absolute():
+        return None
+
+    if ".." in raw_path.parts:
+        return None
+
+    candidate = (PROJECT_ROOT / raw_path).resolve()
+
+    if not candidate.is_relative_to(PROJECT_ROOT):
+        return None
+
+    if any(part in BLOCKED_PARTS for part in candidate.relative_to(PROJECT_ROOT).parts):
+        return None
+
+    return candidate
+
+
 def read_file(path_text: str) -> str:
     """
     Safely read a project file.
     """
 
-    path = Path(path_text).expanduser()
+    path = safe_project_path(path_text)
 
-    if path.is_absolute():
-        return "Blocked: absolute paths are not allowed."
-
-    if any(part in BLOCKED_PARTS for part in path.parts):
+    if path is None:
         return "Blocked: this path is not allowed."
 
     if not path.exists():
-        return f"File not found: {path}"
+        return f"File not found: {path_text}"
 
     if not path.is_file():
-        return f"Not a file: {path}"
+        return f"Not a file: {path_text}"
 
     return path.read_text(encoding="utf-8")
 
@@ -40,17 +63,18 @@ def project_tree(max_depth: int = 2) -> str:
     Safely list project files up to a limited depth.
     """
 
-    root = Path(".")
     lines = []
 
-    for path in sorted(root.rglob("*")):
-        if any(part in BLOCKED_PARTS for part in path.parts):
+    for path in sorted(PROJECT_ROOT.rglob("*")):
+        relative = path.relative_to(PROJECT_ROOT)
+
+        if any(part in BLOCKED_PARTS for part in relative.parts):
             continue
 
         if path.name.startswith(".DS_Store"):
             continue
 
-        depth = len(path.parts)
+        depth = len(relative.parts)
 
         if depth > max_depth:
             continue
@@ -74,8 +98,10 @@ def search_files(keyword: str) -> str:
 
     matches = []
 
-    for path in sorted(Path(".").rglob("*")):
-        if any(part in BLOCKED_PARTS for part in path.parts):
+    for path in sorted(PROJECT_ROOT.rglob("*")):
+        relative = path.relative_to(PROJECT_ROOT)
+
+        if any(part in BLOCKED_PARTS for part in relative.parts):
             continue
 
         if not path.is_file():
@@ -87,7 +113,7 @@ def search_files(keyword: str) -> str:
             continue
 
         if keyword.lower() in text.lower():
-            matches.append(str(path))
+            matches.append(str(relative))
 
     if not matches:
         return f"No matches found for: {keyword}"
@@ -107,8 +133,10 @@ def grep_files(keyword: str) -> str:
 
     matches = []
 
-    for path in sorted(Path(".").rglob("*")):
-        if any(part in BLOCKED_PARTS for part in path.parts):
+    for path in sorted(PROJECT_ROOT.rglob("*")):
+        relative = path.relative_to(PROJECT_ROOT)
+
+        if any(part in BLOCKED_PARTS for part in relative.parts):
             continue
 
         if not path.is_file():
@@ -121,7 +149,7 @@ def grep_files(keyword: str) -> str:
 
         for line_number, line in enumerate(lines, start=1):
             if keyword.lower() in line.lower():
-                matches.append(f"{path}:{line_number}: {line.strip()}")
+                matches.append(f"{relative}:{line_number}: {line.strip()}")
 
     if not matches:
         return f"No matches found for: {keyword}"
@@ -137,8 +165,10 @@ def find_todos() -> str:
     keywords = ("TODO", "FIXME")
     matches = []
 
-    for path in sorted(Path(".").rglob("*")):
-        if any(part in BLOCKED_PARTS for part in path.parts):
+    for path in sorted(PROJECT_ROOT.rglob("*")):
+        relative = path.relative_to(PROJECT_ROOT)
+
+        if any(part in BLOCKED_PARTS for part in relative.parts):
             continue
 
         if not path.is_file():
@@ -156,7 +186,7 @@ def find_todos() -> str:
                 continue
 
             if any(keyword.lower() in line_lower for keyword in keywords):
-                matches.append(f"{path}:{line_number}: {line.strip()}")
+                matches.append(f"{relative}:{line_number}: {line.strip()}")
 
     if not matches:
         return "No TODO/FIXME notes found."
