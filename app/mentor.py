@@ -1,4 +1,4 @@
-from app.config import DEFAULT_MODEL, PROMPT_DIRECTORY
+from app.config import PROMPT_DIRECTORY
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
 from app.ollama_client import run_ollama
@@ -13,8 +13,9 @@ def ask_mentor(question: str, memory: ConversationMemory) -> str:
     """
 
     system_prompt = load_prompt("sts_mentor.md", PROMPT_DIRECTORY)
-    conversation_context = memory.context()
-    knowledge = search_knowledge(question)
+    # Keep mentor prompt small so identity/safety instructions are not truncated.
+    conversation_context = memory.context()[-1000:]
+    knowledge = search_knowledge(question)[:1200]
 
     full_prompt = build_prompt(
         system_prompt=system_prompt,
@@ -23,7 +24,7 @@ def ask_mentor(question: str, memory: ConversationMemory) -> str:
         knowledge=knowledge,
     )
 
-    raw_answer = run_ollama(DEFAULT_MODEL, full_prompt)
+    raw_answer = run_ollama("sts-fast", full_prompt, num_predict=80)
     answer = clean_response(raw_answer)
 
     memory.add("User", question)
