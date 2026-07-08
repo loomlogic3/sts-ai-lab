@@ -53,7 +53,7 @@ def run_mentor_chat() -> None:
             print()
             continue
 
-        if input_type == InputType.QUESTION:
+        if input_type == InputType.AI_REQUEST:
             latest_fact = memory.latest_user_fact()
 
             if latest_fact and "favorite language" in question.lower():
