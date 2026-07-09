@@ -25,7 +25,7 @@ def answer_with_agent(
     temperature = agent_config.get("temperature", 0.2)
 
     system_prompt = load_agent_prompt(agent_name)
-    conversation_context = ''
+    conversation_context = memory.context()[-1000:]
     knowledge = search_knowledge(question)
 
     config_context = (
