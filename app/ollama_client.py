@@ -9,7 +9,7 @@ import urllib.request
 OLLAMA_GENERATE_URL = "http://127.0.0.1:11434/api/generate"
 
 
-def run_ollama(model: str, prompt: str, num_predict: int = 120) -> str:
+def run_ollama(model: str, prompt: str, num_predict: int = 120, temperature: float = 0.2) -> str:
     """
     Send a prompt to Ollama using the HTTP API.
     """
@@ -21,7 +21,7 @@ def run_ollama(model: str, prompt: str, num_predict: int = 120) -> str:
         "options": {
             "num_ctx": 1024,
             "num_predict": num_predict,
-            "temperature": 0.2
+            "temperature": temperature
         },
     }
 

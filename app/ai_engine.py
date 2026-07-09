@@ -22,6 +22,8 @@ def answer_with_agent(
 
     agent_config = load_agent_config(agent_name)
     model = agent_config.get("model", "llama3.2:1b")
+    temperature = agent_config.get("temperature", 0.2)
+    temperature = agent_config.get("temperature", 0.2)
 
     system_prompt = load_agent_prompt(agent_name)
     conversation_context = ''
@@ -41,7 +43,7 @@ def answer_with_agent(
         knowledge=knowledge,
     )
 
-    raw_answer = run_ollama(model, full_prompt)
+    raw_answer = run_ollama(model, full_prompt, temperature=temperature)
     answer = clean_response(raw_answer)
 
     memory.add("User", question)
