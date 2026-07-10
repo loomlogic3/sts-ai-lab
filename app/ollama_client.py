@@ -1,17 +1,24 @@
 """
-Ollama HTTP client for STS AI Engine.
+Ollama HTTP client for STS AI Lab.
 """
 
 import json
+import urllib.error
 import urllib.request
 
 
-OLLAMA_GENERATE_URL = "http://127.0.0.1:11434/api/generate"
+OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
+OLLAMA_TIMEOUT_SECONDS = 60
 
 
-def run_ollama(model: str, prompt: str, num_predict: int = 120, temperature: float = 0.2) -> str:
+def run_ollama(
+    model: str,
+    prompt: str,
+    num_predict: int = 120,
+    temperature: float = 0.2,
+) -> str:
     """
-    Send a prompt to Ollama using the HTTP API.
+    Send a prompt to Ollama and return the response text.
     """
 
     payload = {
@@ -21,18 +28,30 @@ def run_ollama(model: str, prompt: str, num_predict: int = 120, temperature: flo
         "options": {
             "num_ctx": 1024,
             "num_predict": num_predict,
-            "temperature": temperature
+            "temperature": temperature,
         },
     }
 
     request = urllib.request.Request(
-        OLLAMA_GENERATE_URL,
+        OLLAMA_URL,
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"},
-        method="POST",
     )
 
-    with urllib.request.urlopen(request, timeout=600) as response:
-        data = json.loads(response.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(
+            request,
+            timeout=OLLAMA_TIMEOUT_SECONDS,
+        ) as response:
+            data = json.loads(response.read().decode("utf-8"))
 
-    return data.get("response", "").strip()
+    except TimeoutError:
+        return "Ollama request timed out. Is the local model overloaded?"
+
+    except urllib.error.URLError as error:
+        return f"Ollama connection failed: {error.reason}"
+
+    except json.JSONDecodeError:
+        return "Ollama returned an invalid JSON response."
+
+    return data.get("response", "")
