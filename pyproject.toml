@@ -1,0 +1,15 @@
+[project]
+name = "sts-ai-lab"
+version = "0.1.0"
+description = "SynthThinkingSystems AI Research and Engineering Laboratory"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0,<10.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
