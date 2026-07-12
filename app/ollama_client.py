@@ -10,6 +10,20 @@ import urllib.request
 OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
 OLLAMA_TIMEOUT_SECONDS = 60
 
+OLLAMA_ERROR_PREFIXES = (
+    "Ollama request timed out.",
+    "Ollama connection failed:",
+    "Ollama returned an invalid JSON response.",
+)
+
+
+def is_ollama_error(message: str) -> bool:
+    """
+    Return True when a response is an Ollama client error message.
+    """
+    return message.startswith(OLLAMA_ERROR_PREFIXES)
+
+
 
 def run_ollama(
     model: str,

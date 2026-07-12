@@ -218,3 +218,6 @@ __marimo__/
 .streamlit/secrets.toml
 .DS_Store
 data/*.json
+
+# Local per-agent memory files
+data/memory/
