@@ -6,7 +6,7 @@ from app.agent_config import load_agent_config
 from app.agent_registry import load_agent_prompt
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
-from app.ollama_client import run_ollama
+from app.ollama_client import is_ollama_error, run_ollama
 from app.prompt_builder import build_prompt
 from app.response_processor import clean_response
 
@@ -44,6 +44,9 @@ def answer_with_agent(
 
     raw_answer = run_ollama(model, full_prompt, temperature=temperature)
     answer = clean_response(raw_answer)
+
+    if is_ollama_error(answer):
+        return answer
 
     memory.add("User", question)
     memory.add(agent_name, answer)

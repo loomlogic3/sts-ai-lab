@@ -25,7 +25,7 @@ def start_chat(agent_name: str) -> None:
 
         return
 
-    memory = ConversationMemory()
+    memory = ConversationMemory(agent_name)
     memory.load()
 
     print(f"{agent_name} chat started.")

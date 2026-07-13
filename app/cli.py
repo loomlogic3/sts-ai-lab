@@ -16,7 +16,7 @@ from app.project import project_summary
 
 
 def run_mentor_chat() -> None:
-    memory = ConversationMemory()
+    memory = ConversationMemory("sts_mentor")
     memory.load()
 
     print("STS Mentor chat started.")
@@ -93,7 +93,7 @@ def log_experiment_from_cli() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python3 -m app.cli mentor|chat|agents|models|experiment|experiments|memory|knowledge|tools|project|status")
+        print("Usage: python3 -m app.cli mentor|chat|agents|models|experiment|experiments|memory|clear|knowledge|tools|project|status")
         return
 
     command = sys.argv[1]
@@ -126,9 +126,17 @@ def main() -> None:
         return
 
     if command == "memory":
-        memory = ConversationMemory()
+        memory_name = sys.argv[2] if len(sys.argv) > 2 else "default"
+        memory = ConversationMemory(memory_name)
         memory.load()
         print(memory.context() or "No memory saved.")
+        return
+
+    if command == "clear":
+        memory_name = sys.argv[2] if len(sys.argv) > 2 else "default"
+        memory = ConversationMemory(memory_name)
+        memory.clear()
+        print(f"Memory cleared: {memory_name}")
         return
 
     if command == "knowledge":
