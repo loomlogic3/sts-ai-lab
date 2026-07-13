@@ -2,6 +2,19 @@
 Prompt Builder for the STS AI Engine.
 """
 
+from app.config import MAX_PROMPT_CHARS
+
+
+def truncate_prompt(prompt: str) -> str:
+    """
+    Keep final prompts within the configured local resource budget.
+    """
+
+    if len(prompt) <= MAX_PROMPT_CHARS:
+        return prompt
+
+    return prompt[:MAX_PROMPT_CHARS] + "\n\n[Prompt truncated: resource budget reached.]"
+
 
 def build_prompt(
     system_prompt: str,
@@ -31,4 +44,4 @@ def build_prompt(
         f"User Question:\n{user_question.strip()}"
     )
 
-    return "\n\n".join(sections)
+    return truncate_prompt("\n\n".join(sections))

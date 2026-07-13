@@ -4,6 +4,8 @@ Simple keyword knowledge search for the STS AI Engine.
 
 from pathlib import Path
 
+from app.config import MAX_KNOWLEDGE_CHARS_PER_DOCUMENT, MAX_KNOWLEDGE_DOCUMENTS
+
 KNOWLEDGE_DIR = Path("knowledge")
 
 
@@ -41,9 +43,15 @@ def search_knowledge(query: str) -> str:
 
     sections = []
 
-    for score, filename, text in matches[:3]:
+    for score, filename, text in matches[:MAX_KNOWLEDGE_DOCUMENTS]:
+        text = text[:MAX_KNOWLEDGE_CHARS_PER_DOCUMENT]
         sections.append(
             f"Source: {filename}\n\n{text}"
         )
 
-    return "\n\n---\n\n".join(sections)
+    result = "\n\n---\n\n".join(sections)
+
+    if len(matches) > MAX_KNOWLEDGE_DOCUMENTS:
+        result += "\n\n[Knowledge results limited: resource budget reached.]"
+
+    return result

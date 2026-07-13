@@ -5,11 +5,9 @@ Code understanding service for STS AI Lab.
 import ast
 from pathlib import Path
 
+from app.config import MAX_CODE_EXPLANATION_CHARS
 from app.file_tools import read_file
 from app.ollama_client import run_ollama
-
-
-MAX_CHARS = 2500
 
 
 def explain_python_file(path: str) -> str:
@@ -85,7 +83,7 @@ def explain_file(path: str, model: str = "sts-fast") -> str:
     if source.startswith("Blocked") or source.startswith("File not found"):
         return source
 
-    source = source[:MAX_CHARS]
+    source = source[:MAX_CODE_EXPLANATION_CHARS]
     filename = Path(path).name
 
     prompt = f"""
