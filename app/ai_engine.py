@@ -4,6 +4,7 @@ Core AI Engine for STS AI Lab.
 
 from app.agent_config import load_agent_config
 from app.agent_registry import load_agent_prompt
+from app.config import MAX_CONVERSATION_CHARS
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
 from app.ollama_client import is_ollama_error, run_ollama
@@ -25,7 +26,7 @@ def answer_with_agent(
     temperature = agent_config.get("temperature", 0.2)
 
     system_prompt = load_agent_prompt(agent_name)
-    conversation_context = memory.context()[-1000:]
+    conversation_context = memory.context()[-MAX_CONVERSATION_CHARS:]
     knowledge = search_knowledge(question)
 
     config_context = (

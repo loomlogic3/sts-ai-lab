@@ -6,9 +6,14 @@ import json
 import urllib.error
 import urllib.request
 
+from app.config import (
+    OLLAMA_DEFAULT_NUM_PREDICT,
+    OLLAMA_NUM_CONTEXT,
+    OLLAMA_TIMEOUT_SECONDS,
+)
+
 
 OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
-OLLAMA_TIMEOUT_SECONDS = 60
 
 OLLAMA_ERROR_PREFIXES = (
     "Ollama request timed out.",
@@ -28,7 +33,7 @@ def is_ollama_error(message: str) -> bool:
 def run_ollama(
     model: str,
     prompt: str,
-    num_predict: int = 120,
+    num_predict: int = OLLAMA_DEFAULT_NUM_PREDICT,
     temperature: float = 0.2,
 ) -> str:
     """
@@ -40,7 +45,7 @@ def run_ollama(
         "prompt": prompt,
         "stream": False,
         "options": {
-            "num_ctx": 1024,
+            "num_ctx": OLLAMA_NUM_CONTEXT,
             "num_predict": num_predict,
             "temperature": temperature,
         },

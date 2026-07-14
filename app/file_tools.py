@@ -4,6 +4,13 @@ Read-only file tools for STS AI Lab.
 
 from pathlib import Path
 
+from app.config import (
+    MAX_FILE_READ_CHARS,
+    MAX_SEARCH_FILE_CHARS,
+    MAX_SEARCH_FILES,
+    MAX_SEARCH_RESULTS,
+)
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -13,6 +20,17 @@ BLOCKED_PARTS = {
     "__pycache__",
     "data",
 }
+
+
+def truncate_text(text: str, max_chars: int) -> str:
+    """
+    Limit large text blocks so local tools stay responsive.
+    """
+
+    if len(text) <= max_chars:
+        return text
+
+    return text[:max_chars] + "\n\n[Output truncated: resource budget reached.]"
 
 
 def safe_project_path(path_text: str) -> Path | None:
@@ -55,7 +73,10 @@ def read_file(path_text: str) -> str:
     if not path.is_file():
         return f"Not a file: {path_text}"
 
-    return path.read_text(encoding="utf-8")
+    return truncate_text(
+        path.read_text(encoding="utf-8"),
+        MAX_FILE_READ_CHARS,
+    )
 
 
 def project_tree(max_depth: int = 2) -> str:
@@ -97,6 +118,7 @@ def search_files(keyword: str) -> str:
         return "Usage: /search <keyword>"
 
     matches = []
+    scanned_files = 0
 
     for path in sorted(PROJECT_ROOT.rglob("*")):
         relative = path.relative_to(PROJECT_ROOT)
@@ -107,18 +129,31 @@ def search_files(keyword: str) -> str:
         if not path.is_file():
             continue
 
+        scanned_files += 1
+
+        if scanned_files > MAX_SEARCH_FILES:
+            break
+
         try:
-            text = path.read_text(encoding="utf-8")
+            text = path.read_text(encoding="utf-8")[:MAX_SEARCH_FILE_CHARS]
         except UnicodeDecodeError:
             continue
 
         if keyword.lower() in text.lower():
             matches.append(str(relative))
 
+        if len(matches) >= MAX_SEARCH_RESULTS:
+            break
+
     if not matches:
         return f"No matches found for: {keyword}"
 
-    return "\n".join(matches)
+    result = "\n".join(matches)
+
+    if scanned_files > MAX_SEARCH_FILES or len(matches) >= MAX_SEARCH_RESULTS:
+        result += "\n[Output limited: resource budget reached.]"
+
+    return result
 
 
 def grep_files(keyword: str) -> str:
@@ -132,6 +167,7 @@ def grep_files(keyword: str) -> str:
         return "Usage: /grep <keyword>"
 
     matches = []
+    scanned_files = 0
 
     for path in sorted(PROJECT_ROOT.rglob("*")):
         relative = path.relative_to(PROJECT_ROOT)
@@ -142,8 +178,13 @@ def grep_files(keyword: str) -> str:
         if not path.is_file():
             continue
 
+        scanned_files += 1
+
+        if scanned_files > MAX_SEARCH_FILES:
+            break
+
         try:
-            lines = path.read_text(encoding="utf-8").splitlines()
+            lines = path.read_text(encoding="utf-8")[:MAX_SEARCH_FILE_CHARS].splitlines()
         except UnicodeDecodeError:
             continue
 
@@ -151,10 +192,21 @@ def grep_files(keyword: str) -> str:
             if keyword.lower() in line.lower():
                 matches.append(f"{relative}:{line_number}: {line.strip()}")
 
+            if len(matches) >= MAX_SEARCH_RESULTS:
+                break
+
+        if len(matches) >= MAX_SEARCH_RESULTS:
+            break
+
     if not matches:
         return f"No matches found for: {keyword}"
 
-    return "\n".join(matches[:50])
+    result = "\n".join(matches)
+
+    if scanned_files > MAX_SEARCH_FILES or len(matches) >= MAX_SEARCH_RESULTS:
+        result += "\n[Output limited: resource budget reached.]"
+
+    return result
 
 
 def find_todos() -> str:
@@ -164,6 +216,7 @@ def find_todos() -> str:
 
     keywords = ("TODO", "FIXME")
     matches = []
+    scanned_files = 0
 
     for path in sorted(PROJECT_ROOT.rglob("*")):
         relative = path.relative_to(PROJECT_ROOT)
@@ -174,8 +227,13 @@ def find_todos() -> str:
         if not path.is_file():
             continue
 
+        scanned_files += 1
+
+        if scanned_files > MAX_SEARCH_FILES:
+            break
+
         try:
-            lines = path.read_text(encoding="utf-8").splitlines()
+            lines = path.read_text(encoding="utf-8")[:MAX_SEARCH_FILE_CHARS].splitlines()
         except UnicodeDecodeError:
             continue
 
@@ -188,7 +246,18 @@ def find_todos() -> str:
             if any(keyword.lower() in line_lower for keyword in keywords):
                 matches.append(f"{relative}:{line_number}: {line.strip()}")
 
+            if len(matches) >= MAX_SEARCH_RESULTS:
+                break
+
+        if len(matches) >= MAX_SEARCH_RESULTS:
+            break
+
     if not matches:
         return "No TODO/FIXME notes found."
 
-    return "\n".join(matches[:50])
+    result = "\n".join(matches)
+
+    if scanned_files > MAX_SEARCH_FILES or len(matches) >= MAX_SEARCH_RESULTS:
+        result += "\n[Output limited: resource budget reached.]"
+
+    return result
