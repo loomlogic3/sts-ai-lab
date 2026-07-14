@@ -2,22 +2,8 @@
 Simple tool router for the STS AI Engine.
 """
 
-from app.experiment_logger import log_experiment
-from app.code_understanding import analyze_python_file, explain_file, list_python_classes, list_python_functions, list_python_imports
-from app.experiments import list_experiments
-from app.file_tools import find_todos, grep_files, project_tree, read_file, search_files
-from app.knowledge_search import search_knowledge
-from app.memory import ConversationMemory
-from app.tool_registry import format_tools
-from app.project_index import find_symbol, format_project_index, project_map
-from app.change_planner import plan_change
-from app.risk_analyzer import assess_risk
-from app.proposal import create_proposal
-from app.patch_proposal import propose_patch
-from app.patch_drafter import draft_patch
-from app.approval import approval_required
-from app.design_artifact import create_design
 from app.command_registry import get_handler
+from app.memory import ConversationMemory
 
 
 def route_tool(command: str, memory: ConversationMemory) -> str | None:
@@ -26,9 +12,6 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
     """
 
     command = command.strip()
-
-    if command == "/tools":
-        return format_tools()
 
     parts = command.split(" ", 1)
     command_name = parts[0]
@@ -44,100 +27,5 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
     if command == "/clear":
         memory.clear()
         return "Memory cleared."
-
-    if command == "/tree":
-        return project_tree()
-
-    if command.startswith("/search "):
-        keyword = command.replace("/search ", "", 1).strip()
-        return search_files(keyword)
-
-    if command.startswith("/grep "):
-        keyword = command.replace("/grep ", "", 1).strip()
-        return grep_files(keyword)
-
-    if command == "/todos":
-        return find_todos()
-
-    if command.startswith("/plan-change "):
-        goal = command.replace("/plan-change ", "", 1).strip()
-        return plan_change(goal)
-
-    if command.startswith("/risk "):
-        goal = command.replace("/risk ", "", 1).strip()
-        return assess_risk(goal)
-
-    if command.startswith("/proposal "):
-        goal = command.replace("/proposal ", "", 1).strip()
-        return create_proposal(goal)
-
-    if command.startswith("/propose-patch "):
-        goal = command.replace("/propose-patch ", "", 1).strip()
-        return propose_patch(goal)
-
-    if command.startswith("/draft-patch "):
-        goal = command.replace("/draft-patch ", "", 1).strip()
-        return draft_patch(goal)
-
-    if command.startswith("/approval-required "):
-        goal = command.replace("/approval-required ", "", 1).strip()
-        return approval_required(goal)
-
-    if command.startswith("/design "):
-        goal = command.replace("/design ", "", 1).strip()
-        return create_design(goal)
-
-    if command.startswith("/read "):
-        file_path = command.replace("/read ", "", 1).strip()
-        return read_file(file_path)
-
-    if command.startswith("/explain "):
-        file_path = command.replace("/explain ", "", 1).strip()
-        return explain_file(file_path)
-
-    if command.startswith("/analyze "):
-        file_path = command.replace("/analyze ", "", 1).strip()
-        return analyze_python_file(file_path)
-
-    if command.startswith("/functions "):
-        file_path = command.replace("/functions ", "", 1).strip()
-        return list_python_functions(file_path)
-
-    if command.startswith("/classes "):
-        file_path = command.replace("/classes ", "", 1).strip()
-        return list_python_classes(file_path)
-
-    if command.startswith("/imports "):
-        file_path = command.replace("/imports ", "", 1).strip()
-        return list_python_imports(file_path)
-
-    if command == "/index":
-        return format_project_index()
-
-    if command == "/project-map":
-        return project_map()
-
-    if command.startswith("/where "):
-        symbol = command.replace("/where ", "", 1).strip()
-        return find_symbol(symbol)
-
-    if command == "/experiments":
-        experiments = list_experiments()
-        if not experiments:
-            return "No experiments found."
-        return "\n".join(path.name for path in experiments)
-
-    if command.startswith("/knowledge "):
-        query = command.replace("/knowledge ", "", 1).strip()
-        return search_knowledge(query) or "No knowledge found."
-
-    if command.startswith("/log "):
-        note = command.replace("/log ", "", 1).strip()
-
-        if not note:
-            return "Usage: /log <experiment note>"
-
-        path = log_experiment("mentor_session_note", note)
-        return f"Experiment saved: {path}"
 
     return None
