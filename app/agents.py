@@ -2,11 +2,7 @@
 Agent management for STS AI Lab.
 """
 
-import json
-from pathlib import Path
-
-
-AGENTS_DIR = Path("agents")
+from app.agent_config import list_agent_definitions
 
 
 def list_agents() -> list[dict]:
@@ -14,20 +10,14 @@ def list_agents() -> list[dict]:
     Return information about all configured agents.
     """
 
-    agents = []
-
-    for path in sorted(AGENTS_DIR.glob("*.json")):
-        data = json.loads(path.read_text())
-
-        agents.append(
-            {
-                "name": path.stem,
-                "model": data.get("model", "unknown"),
-                "description": data.get("description", ""),
-            }
-        )
-
-    return agents
+    return [
+        {
+            "name": definition["name"],
+            "model": definition["model"],
+            "description": definition["description"],
+        }
+        for definition in list_agent_definitions()
+    ]
 
 
 def print_agents() -> None:

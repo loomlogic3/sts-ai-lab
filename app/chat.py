@@ -1,7 +1,7 @@
 """
 Generic chat runner for all STS AI agents.
 """
-from app.agent_config import load_agent_config
+from app.agent_config import load_agent_definition
 
 from app.agent_registry import list_agents
 from app.ai_engine import answer_with_agent
@@ -51,11 +51,11 @@ def start_chat(agent_name: str) -> None:
             print()
             continue
 
-        agent_config = load_agent_config(agent_name)
+        agent_definition = load_agent_definition(agent_name)
 
         if "what model" in question.lower() or "configured to use" in question.lower():
             print()
-            print(f"{agent_name}: {agent_config.get('model', 'llama3.2:1b')}")
+            print(f"{agent_name}: {agent_definition['model']}")
             print()
             continue
 
@@ -67,7 +67,7 @@ def start_chat(agent_name: str) -> None:
             or "what do you help" in capability_question
         ):
             print()
-            print(f"{agent_name}: {agent_config.get('description', 'I help with STS AI Lab tasks.')}")
+            print(f"{agent_name}: {agent_definition['description']}")
             print()
             continue
 
