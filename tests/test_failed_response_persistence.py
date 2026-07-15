@@ -28,10 +28,14 @@ def test_generic_agent_does_not_save_ollama_error(monkeypatch):
 
     monkeypatch.setattr(
         ai_engine,
-        "load_agent_config",
-        lambda name: {"model": "sts-fast", "temperature": 0.2},
+        "load_agent_definition",
+        lambda name: {
+            "model": "sts-fast",
+            "temperature": 0.2,
+            "description": "",
+            "prompt_text": "prompt",
+        },
     )
-    monkeypatch.setattr(ai_engine, "load_agent_prompt", lambda name: "prompt")
     monkeypatch.setattr(ai_engine, "search_knowledge", lambda question: "")
     monkeypatch.setattr(
         ai_engine,
@@ -55,7 +59,16 @@ def test_generic_agent_does_not_save_ollama_error(monkeypatch):
 def test_mentor_does_not_save_ollama_error(monkeypatch):
     memory = FakeMemory()
 
-    monkeypatch.setattr(mentor, "load_prompt", lambda *args: "prompt")
+    monkeypatch.setattr(
+        mentor,
+        "load_agent_definition",
+        lambda name: {
+            "model": "sts-fast",
+            "temperature": 0.2,
+            "description": "",
+            "prompt_text": "prompt",
+        },
+    )
     monkeypatch.setattr(mentor, "search_knowledge", lambda question: "")
     monkeypatch.setattr(
         mentor,

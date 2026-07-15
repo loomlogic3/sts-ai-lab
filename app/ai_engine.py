@@ -2,8 +2,7 @@
 Core AI Engine for STS AI Lab.
 """
 
-from app.agent_config import load_agent_config
-from app.agent_registry import load_agent_prompt
+from app.agent_config import load_agent_definition
 from app.config import MAX_CONVERSATION_CHARS
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
@@ -21,11 +20,11 @@ def answer_with_agent(
     Generate an answer using a selected agent.
     """
 
-    agent_config = load_agent_config(agent_name)
-    model = agent_config.get("model", "llama3.2:1b")
-    temperature = agent_config.get("temperature", 0.2)
+    agent_definition = load_agent_definition(agent_name)
+    model = agent_definition["model"]
+    temperature = agent_definition["temperature"]
 
-    system_prompt = load_agent_prompt(agent_name)
+    system_prompt = agent_definition["prompt_text"]
     conversation_context = memory.context()[-MAX_CONVERSATION_CHARS:]
     knowledge = search_knowledge(question)
 
@@ -33,7 +32,7 @@ def answer_with_agent(
         f"Agent configuration:\n"
         f"- Agent name: {agent_name}\n"
         f"- Model: {model}\n"
-        f"- Description: {agent_config.get('description', '')}\n"
+        f"- Description: {agent_definition['description']}\n"
     )
 
     full_prompt = build_prompt(
