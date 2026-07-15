@@ -35,7 +35,7 @@ def run_mentor_chat() -> None:
             print("Goodbye.")
             break
 
-        tool_result = route_tool(question, memory)
+        tool_result = route_tool(question, memory, agent_name="sts_mentor")
 
         if tool_result is not None:
             print()

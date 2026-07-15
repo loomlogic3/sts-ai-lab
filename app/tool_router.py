@@ -3,10 +3,27 @@ Simple tool router for the STS AI Engine.
 """
 
 from app.command_registry import get_handler
+from app.agent_config import load_agent_definition
 from app.memory import ConversationMemory
 
 
-def route_tool(command: str, memory: ConversationMemory) -> str | None:
+def tool_allowed(agent_name: str | None, command_name: str) -> bool:
+    """
+    Return whether an active agent may run a registered stateless tool.
+    """
+
+    if agent_name is None:
+        return True
+
+    agent_definition = load_agent_definition(agent_name)
+    return command_name in agent_definition["allowed_tools"]
+
+
+def route_tool(
+    command: str,
+    memory: ConversationMemory,
+    agent_name: str | None = None,
+) -> str | None:
     """
     Route simple slash commands to internal tools.
     """
@@ -19,6 +36,9 @@ def route_tool(command: str, memory: ConversationMemory) -> str | None:
 
     handler = get_handler(command_name)
     if handler:
+        if not tool_allowed(agent_name, command_name):
+            return f"Tool not allowed for agent: {agent_name}"
+
         return handler(args)
 
     if command == "/memory":
