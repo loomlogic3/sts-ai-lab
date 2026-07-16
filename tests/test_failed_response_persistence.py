@@ -1,4 +1,4 @@
-from app import ai_engine, mentor
+from app import agent_runtime, ai_engine, mentor
 from app.ollama_client import is_ollama_error
 
 
@@ -27,7 +27,7 @@ def test_generic_agent_does_not_save_ollama_error(monkeypatch):
     memory = FakeMemory()
 
     monkeypatch.setattr(
-        ai_engine,
+        agent_runtime,
         "load_agent_definition",
         lambda name: {
             "model": "sts-fast",
@@ -36,9 +36,9 @@ def test_generic_agent_does_not_save_ollama_error(monkeypatch):
             "prompt_text": "prompt",
         },
     )
-    monkeypatch.setattr(ai_engine, "search_knowledge", lambda question: "")
+    monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "")
     monkeypatch.setattr(
-        ai_engine,
+        agent_runtime,
         "run_ollama",
         lambda *args, **kwargs: (
             "Ollama request timed out. Is the local model overloaded?"
@@ -60,7 +60,7 @@ def test_mentor_does_not_save_ollama_error(monkeypatch):
     memory = FakeMemory()
 
     monkeypatch.setattr(
-        mentor,
+        agent_runtime,
         "load_agent_definition",
         lambda name: {
             "model": "sts-fast",
@@ -69,9 +69,9 @@ def test_mentor_does_not_save_ollama_error(monkeypatch):
             "prompt_text": "prompt",
         },
     )
-    monkeypatch.setattr(mentor, "search_knowledge", lambda question: "")
+    monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "")
     monkeypatch.setattr(
-        mentor,
+        agent_runtime,
         "run_ollama",
         lambda *args, **kwargs: (
             "Ollama connection failed: Connection refused"
