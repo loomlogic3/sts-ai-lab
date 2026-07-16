@@ -2,5 +2,18 @@
     "prompt": "research_agent.md",
     "model": "sts-fast",
     "temperature": 0.2,
-    "description": "I help plan AI experiments, compare local models, explore RAG, agents, evaluation, and AI infrastructure."
+    "description": "I help plan AI experiments, compare local models, explore RAG, agents, evaluation, and AI infrastructure.",
+    "allowed_tools": [
+        "/tools",
+        "/tree",
+        "/read",
+        "/search",
+        "/grep",
+        "/knowledge",
+        "/experiments",
+        "/explain",
+        "/index",
+        "/project-map",
+        "/where"
+    ]
 }

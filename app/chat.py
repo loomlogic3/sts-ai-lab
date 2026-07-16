@@ -43,7 +43,7 @@ def start_chat(agent_name: str) -> None:
             print("Goodbye.")
             break
 
-        tool_result = route_tool(question, memory)
+        tool_result = route_tool(question, memory, agent_name=agent_name)
 
         if tool_result is not None:
             print()

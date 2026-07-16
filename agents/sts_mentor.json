@@ -2,5 +2,20 @@
     "prompt": "sts_mentor.md",
     "model": "sts-fast",
     "temperature": 0.2,
-    "description": "I teach AI engineering concepts for the STS AI Lab and explain how the system is built."
+    "description": "I teach AI engineering concepts for the STS AI Lab and explain how the system is built.",
+    "allowed_tools": [
+        "/tools",
+        "/tree",
+        "/read",
+        "/search",
+        "/grep",
+        "/knowledge",
+        "/risk",
+        "/proposal",
+        "/design",
+        "/explain",
+        "/index",
+        "/project-map",
+        "/where"
+    ]
 }

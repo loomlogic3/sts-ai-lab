@@ -9,6 +9,7 @@ AGENT_DIR = Path("agents")
 DEFAULT_AGENT_MODEL = "llama3.2:1b"
 DEFAULT_AGENT_TEMPERATURE = 0.2
 DEFAULT_AGENT_DESCRIPTION = ""
+DEFAULT_ALLOWED_TOOLS: tuple[str, ...] = ()
 
 
 def agent_prompt_path(agent_name: str, prompt_file: str | None = None) -> Path:
@@ -32,6 +33,7 @@ def load_agent_config(agent_name: str) -> dict:
             "model": DEFAULT_AGENT_MODEL,
             "temperature": DEFAULT_AGENT_TEMPERATURE,
             "description": DEFAULT_AGENT_DESCRIPTION,
+            "allowed_tools": DEFAULT_ALLOWED_TOOLS,
         }
 
     with path.open("r", encoding="utf-8") as f:
@@ -65,6 +67,7 @@ def load_agent_definition(agent_name: str) -> dict:
         "model": config.get("model", DEFAULT_AGENT_MODEL),
         "temperature": config.get("temperature", DEFAULT_AGENT_TEMPERATURE),
         "description": config.get("description", DEFAULT_AGENT_DESCRIPTION),
+        "allowed_tools": list(config.get("allowed_tools", DEFAULT_ALLOWED_TOOLS)),
     }
 
 

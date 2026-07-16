@@ -2,5 +2,27 @@
     "prompt": "code_agent.md",
     "model": "sts-fast",
     "temperature": 0.2,
-    "description": "I help with Python, FastAPI, CLI tools, AI systems, automation, debugging, and code review."
+    "description": "I help with Python, FastAPI, CLI tools, AI systems, automation, debugging, and code review.",
+    "allowed_tools": [
+        "/tools",
+        "/tree",
+        "/read",
+        "/search",
+        "/grep",
+        "/todos",
+        "/plan-change",
+        "/risk",
+        "/proposal",
+        "/propose-patch",
+        "/draft-patch",
+        "/approval-required",
+        "/explain",
+        "/analyze",
+        "/functions",
+        "/classes",
+        "/imports",
+        "/index",
+        "/project-map",
+        "/where"
+    ]
 }
