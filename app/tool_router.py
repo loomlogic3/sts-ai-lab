@@ -2,8 +2,11 @@
 Simple tool router for the STS AI Engine.
 """
 
+from time import perf_counter
+
 from app.command_registry import get_handler
 from app.agent_config import load_agent_definition
+from app.audit_log import write_audit_record
 from app.memory import ConversationMemory
 
 
@@ -36,7 +39,17 @@ def route_tool(
 
     handler = get_handler(command_name)
     if handler:
+        started_at = perf_counter()
         if not tool_allowed(agent_name, command_name):
+            agent_definition = load_agent_definition(agent_name)
+            write_audit_record(
+                agent_name=agent_name,
+                model=agent_definition["model"],
+                status="blocked",
+                duration_ms=max(0, round((perf_counter() - started_at) * 1000)),
+                memory_persisted=False,
+                error_category="tool_not_allowed",
+            )
             return f"Tool not allowed for agent: {agent_name}"
 
         return handler(args)
