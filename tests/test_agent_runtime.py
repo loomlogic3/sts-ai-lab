@@ -1,5 +1,6 @@
 from app import agent_runtime, ai_engine, mentor
 from app.agent_runtime import AgentRuntimeOptions
+from app.model_execution import ModelExecutionResult
 
 
 class FakeMemory:
@@ -74,11 +75,11 @@ def test_canonical_definition_supplies_runtime_metadata(monkeypatch):
 
     monkeypatch.setattr(agent_runtime, "build_prompt", fake_build_prompt)
 
-    def fake_run(model, prompt, **kwargs):
-        captured["ollama"] = (model, prompt, kwargs)
-        return "answer"
+    def fake_execute_model(**kwargs):
+        captured["model_execution"] = kwargs
+        return ModelExecutionResult("answer", "success", 1)
 
-    monkeypatch.setattr(agent_runtime, "run_ollama", fake_run)
+    monkeypatch.setattr(agent_runtime, "execute_model", fake_execute_model)
 
     agent_runtime.execute_agent(
         "code_agent",
@@ -89,11 +90,12 @@ def test_canonical_definition_supplies_runtime_metadata(monkeypatch):
 
     assert captured["prompt_parts"]["system_prompt"] == "Canonical prompt"
     assert "Canonical description" in captured["prompt_parts"]["conversation"]
-    assert captured["ollama"] == (
-        "canonical-model",
-        "built prompt",
-        {"temperature": 0.35},
-    )
+    assert captured["model_execution"] == {
+        "model": "canonical-model",
+        "prompt": "built prompt",
+        "temperature": 0.35,
+        "num_predict": None,
+    }
 
 
 def test_conversation_and_knowledge_budgets_remain_enforced(monkeypatch):
@@ -110,7 +112,11 @@ def test_conversation_and_knowledge_budgets_remain_enforced(monkeypatch):
         "build_prompt",
         lambda **kwargs: captured.update(kwargs) or "prompt",
     )
-    monkeypatch.setattr(agent_runtime, "run_ollama", lambda *args, **kwargs: "answer")
+    monkeypatch.setattr(
+        agent_runtime,
+        "execute_model",
+        lambda **kwargs: ModelExecutionResult("answer", "success", 1),
+    )
 
     agent_runtime.execute_agent(
         "sts_mentor",
@@ -130,7 +136,11 @@ def test_successful_answer_persists_memory_exactly_once(monkeypatch):
         lambda name: agent_definition(),
     )
     monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "")
-    monkeypatch.setattr(agent_runtime, "run_ollama", lambda *args, **kwargs: " answer ")
+    monkeypatch.setattr(
+        agent_runtime,
+        "execute_model",
+        lambda **kwargs: ModelExecutionResult(" answer ", "success", 1),
+    )
     memory = FakeMemory()
 
     answer = agent_runtime.execute_agent("code_agent", "hello", memory)
@@ -152,8 +162,13 @@ def test_failed_ollama_response_is_not_persisted(monkeypatch):
     monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "")
     monkeypatch.setattr(
         agent_runtime,
-        "run_ollama",
-        lambda *args, **kwargs: "Ollama connection failed: refused",
+        "execute_model",
+        lambda **kwargs: ModelExecutionResult(
+            "Ollama connection failed: refused",
+            "failure",
+            1,
+            "ollama_error",
+        ),
     )
     memory = FakeMemory()
 
@@ -173,11 +188,11 @@ def test_mentor_output_limit_and_memory_role_remain_intact(monkeypatch):
     )
     monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "")
 
-    def fake_run(model, prompt, **kwargs):
+    def fake_execute_model(**kwargs):
         captured.update(kwargs)
-        return "answer"
+        return ModelExecutionResult("answer", "success", 1)
 
-    monkeypatch.setattr(agent_runtime, "run_ollama", fake_run)
+    monkeypatch.setattr(agent_runtime, "execute_model", fake_execute_model)
     memory = FakeMemory()
 
     mentor.ask_mentor("hello", memory)

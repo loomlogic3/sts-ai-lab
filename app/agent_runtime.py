@@ -10,7 +10,7 @@ from app.audit_log import write_audit_record
 from app.config import MAX_CONVERSATION_CHARS
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
-from app.ollama_client import is_ollama_error, run_ollama
+from app.model_execution import execute_model
 from app.prompt_builder import build_prompt
 from app.response_processor import clean_response
 
@@ -65,37 +65,22 @@ def execute_agent(
             knowledge=knowledge,
         )
 
-        ollama_options = {
-            "temperature": agent_definition["temperature"],
-        }
-        if options.num_predict is not None:
-            ollama_options["num_predict"] = options.num_predict
-
-        raw_answer = run_ollama(
-            model,
-            prompt,
-            **ollama_options,
+        model_result = execute_model(
+            model=model,
+            prompt=prompt,
+            temperature=agent_definition["temperature"],
+            num_predict=options.num_predict,
         )
-        answer = clean_response(raw_answer)
+        answer = clean_response(model_result.response)
 
-        if is_ollama_error(answer):
-            status = (
-                "timeout"
-                if answer.startswith("Ollama request timed out.")
-                else "failure"
-            )
-            error_category = (
-                "ollama_timeout"
-                if status == "timeout"
-                else "ollama_error"
-            )
+        if model_result.status != "success":
             _audit_execution(
                 started_at=started_at,
                 agent_name=agent_name,
                 model=model,
-                status=status,
+                status=model_result.status,
                 memory_persisted=False,
-                error_category=error_category,
+                error_category=model_result.error_category,
             )
             return answer
 

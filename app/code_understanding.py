@@ -4,10 +4,13 @@ Code understanding service for STS AI Lab.
 
 import ast
 from pathlib import Path
+from time import perf_counter
 
+from app.agent_config import load_agent_definition
+from app.audit_log import write_audit_record
 from app.config import MAX_CODE_EXPLANATION_CHARS
 from app.file_tools import read_file
-from app.ollama_client import run_ollama
+from app.model_execution import execute_model
 
 
 def explain_python_file(path: str) -> str:
@@ -70,9 +73,12 @@ def explain_python_file(path: str) -> str:
     return "\n".join(lines)
 
 
-def explain_file(path: str, model: str = "sts-fast") -> str:
+def explain_file(path: str, model: str | None = None) -> str:
     """
     Explain the purpose of a project file.
+
+    The model argument is retained for call compatibility. Canonical Code Agent
+    configuration remains authoritative for model-backed explanations.
     """
 
     if path.endswith(".py"):
@@ -106,7 +112,35 @@ SOURCE:
 {source}
 """
 
-    return run_ollama(model, prompt)
+    agent_definition = load_agent_definition("code_agent")
+    started_at = perf_counter()
+
+    try:
+        result = execute_model(
+            model=agent_definition["model"],
+            prompt=prompt,
+            temperature=agent_definition["temperature"],
+        )
+    except Exception:
+        write_audit_record(
+            agent_name="code_agent",
+            model=agent_definition["model"],
+            status="failure",
+            duration_ms=max(0, round((perf_counter() - started_at) * 1000)),
+            memory_persisted=False,
+            error_category="runtime_error",
+        )
+        raise
+
+    write_audit_record(
+        agent_name="code_agent",
+        model=agent_definition["model"],
+        status=result.status,
+        duration_ms=result.duration_ms,
+        memory_persisted=False,
+        error_category=result.error_category,
+    )
+    return result.response
 
 
 def list_python_functions(path: str) -> str:

@@ -3,6 +3,7 @@ import json
 import pytest
 
 from app import agent_runtime, audit_log, tool_router
+from app.model_execution import ModelExecutionResult
 
 
 class FakeMemory:
@@ -65,8 +66,12 @@ def test_successful_execution_writes_one_private_audit_record(
 ):
     monkeypatch.setattr(
         agent_runtime,
-        "run_ollama",
-        lambda *args, **kwargs: "private response",
+        "execute_model",
+        lambda **kwargs: ModelExecutionResult(
+            "private response",
+            "success",
+            1,
+        ),
     )
     memory = FakeMemory()
 
@@ -123,8 +128,13 @@ def test_ollama_errors_write_the_correct_outcome(
 ):
     monkeypatch.setattr(
         agent_runtime,
-        "run_ollama",
-        lambda *args, **kwargs: ollama_response,
+        "execute_model",
+        lambda **kwargs: ModelExecutionResult(
+            ollama_response,
+            status,
+            1,
+            error_category,
+        ),
     )
     memory = FakeMemory()
 
@@ -142,7 +152,11 @@ def test_memory_save_failure_is_audited_and_preserves_exception(
     runtime,
     monkeypatch,
 ):
-    monkeypatch.setattr(agent_runtime, "run_ollama", lambda *args, **kwargs: "answer")
+    monkeypatch.setattr(
+        agent_runtime,
+        "execute_model",
+        lambda **kwargs: ModelExecutionResult("answer", "success", 1),
+    )
     memory = FakeMemory()
 
     def fail_save():
@@ -187,7 +201,11 @@ def test_blocked_tool_execution_writes_blocked_outcome(
 
 
 def test_audit_write_failure_does_not_break_agent_response(runtime, monkeypatch):
-    monkeypatch.setattr(agent_runtime, "run_ollama", lambda *args, **kwargs: "answer")
+    monkeypatch.setattr(
+        agent_runtime,
+        "execute_model",
+        lambda **kwargs: ModelExecutionResult("answer", "success", 1),
+    )
 
     def fail_open(*args, **kwargs):
         raise OSError("read only")
