@@ -1,4 +1,5 @@
 from app import agent_runtime, ai_engine, mentor
+from app.model_execution import ModelExecutionResult
 from app.ollama_client import is_ollama_error
 
 
@@ -39,9 +40,12 @@ def test_generic_agent_does_not_save_ollama_error(monkeypatch):
     monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "")
     monkeypatch.setattr(
         agent_runtime,
-        "run_ollama",
-        lambda *args, **kwargs: (
-            "Ollama request timed out. Is the local model overloaded?"
+        "execute_model",
+        lambda **kwargs: ModelExecutionResult(
+            "Ollama request timed out. Is the local model overloaded?",
+            "timeout",
+            1,
+            "ollama_timeout",
         ),
     )
 
@@ -72,9 +76,12 @@ def test_mentor_does_not_save_ollama_error(monkeypatch):
     monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "")
     monkeypatch.setattr(
         agent_runtime,
-        "run_ollama",
-        lambda *args, **kwargs: (
-            "Ollama connection failed: Connection refused"
+        "execute_model",
+        lambda **kwargs: ModelExecutionResult(
+            "Ollama connection failed: Connection refused",
+            "failure",
+            1,
+            "ollama_error",
         ),
     )
 

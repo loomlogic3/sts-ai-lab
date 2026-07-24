@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Legacy experimental entry point. Governed production Python execution uses:
+# python3 -m app.cli mentor
 MODEL="llama3.2:1b"
 PROMPT_FILE="scripts/prompts/sts_mentor.md"
 
