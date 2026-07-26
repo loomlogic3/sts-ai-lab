@@ -4,6 +4,7 @@ Canonical execution runtime for STS AI agents.
 
 from dataclasses import dataclass
 from time import perf_counter
+from typing import Literal
 
 from app.agent_config import load_agent_definition
 from app.audit_log import write_audit_record
@@ -25,6 +26,24 @@ class AgentRuntimeOptions:
     knowledge_chars: int | None = None
     num_predict: int | None = None
     include_agent_config: bool = False
+    caller_context: str | None = None
+    persist_memory: bool = True
+
+
+AgentRuntimeStatus = Literal["success", "failure", "timeout"]
+
+
+@dataclass(frozen=True)
+class AgentRuntimeResult:
+    """
+    Structured outcome from one canonical agent execution.
+    """
+
+    response: str
+    status: AgentRuntimeStatus
+    model: str
+    memory_persisted: bool
+    error_category: str | None = None
 
 
 def execute_agent(
@@ -35,6 +54,24 @@ def execute_agent(
 ) -> str:
     """
     Execute an agent through the shared local runtime.
+    """
+
+    return execute_agent_result(
+        agent_name=agent_name,
+        question=question,
+        memory=memory,
+        options=options,
+    ).response
+
+
+def execute_agent_result(
+    agent_name: str,
+    question: str,
+    memory: ConversationMemory,
+    options: AgentRuntimeOptions | None = None,
+) -> AgentRuntimeResult:
+    """
+    Execute an agent and return its structured canonical runtime outcome.
     """
 
     started_at = perf_counter()
@@ -48,6 +85,17 @@ def execute_agent(
 
         if options.knowledge_chars is not None:
             knowledge = knowledge[:options.knowledge_chars]
+
+        if options.caller_context:
+            caller_context = (
+                "Caller-provided context:\n"
+                f"{options.caller_context}"
+            )
+            conversation = (
+                f"{conversation}\n\n{caller_context}"
+                if conversation
+                else caller_context
+            )
 
         if options.include_agent_config:
             config_context = (
@@ -82,20 +130,34 @@ def execute_agent(
                 memory_persisted=False,
                 error_category=model_result.error_category,
             )
-            return answer
+            return AgentRuntimeResult(
+                response=answer,
+                status=model_result.status,
+                model=model,
+                memory_persisted=False,
+                error_category=model_result.error_category,
+            )
 
-        memory.add("User", question)
-        memory.add(options.memory_role or agent_name, answer)
-        memory.save()
+        memory_persisted = False
+        if options.persist_memory:
+            memory.add("User", question)
+            memory.add(options.memory_role or agent_name, answer)
+            memory.save()
+            memory_persisted = True
 
         _audit_execution(
             started_at=started_at,
             agent_name=agent_name,
             model=model,
             status="success",
-            memory_persisted=True,
+            memory_persisted=memory_persisted,
         )
-        return answer
+        return AgentRuntimeResult(
+            response=answer,
+            status="success",
+            model=model,
+            memory_persisted=memory_persisted,
+        )
     except Exception:
         _audit_execution(
             started_at=started_at,
