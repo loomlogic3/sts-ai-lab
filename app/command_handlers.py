@@ -22,120 +22,121 @@ from app.project_index import find_symbol, format_project_index, project_map
 from app.proposal import create_proposal
 from app.risk_analyzer import assess_risk
 from app.tool_registry import format_tools
+from app.workspace import Workspace
 
 
-def tools_handler(args: str) -> str:
+def tools_handler(args: str, workspace: Workspace | None = None) -> str:
     """
     Handle the /tools command.
     """
     return format_tools()
 
 
-def tree_handler(args: str) -> str:
+def tree_handler(args: str, workspace: Workspace | None = None) -> str:
     """
     Handle the /tree command.
     """
-    return project_tree()
+    return project_tree(workspace=workspace)
 
 
-def read_handler(args: str) -> str:
+def read_handler(args: str, workspace: Workspace | None = None) -> str:
     """
     Handle the /read command.
     """
-    return read_file(args)
+    return read_file(args, workspace)
 
 
-def search_handler(args: str) -> str:
+def search_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /search command."""
-    return search_files(args)
+    return search_files(args, workspace)
 
 
-def grep_handler(args: str) -> str:
+def grep_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /grep command."""
-    return grep_files(args)
+    return grep_files(args, workspace)
 
 
-def todos_handler(args: str) -> str:
+def todos_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /todos command."""
-    return find_todos()
+    return find_todos(workspace)
 
 
-def plan_change_handler(args: str) -> str:
+def plan_change_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /plan-change command."""
     return plan_change(args)
 
 
-def risk_handler(args: str) -> str:
+def risk_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /risk command."""
     return assess_risk(args)
 
 
-def proposal_handler(args: str) -> str:
+def proposal_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /proposal command."""
     return create_proposal(args)
 
 
-def propose_patch_handler(args: str) -> str:
+def propose_patch_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /propose-patch command."""
     return propose_patch(args)
 
 
-def draft_patch_handler(args: str) -> str:
+def draft_patch_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /draft-patch command."""
     return draft_patch(args)
 
 
-def approval_required_handler(args: str) -> str:
+def approval_required_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /approval-required command."""
     return approval_required(args)
 
 
-def design_handler(args: str) -> str:
+def design_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /design command."""
     return create_design(args)
 
 
-def explain_handler(args: str) -> str:
+def explain_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /explain command."""
-    return explain_file(args)
+    return explain_file(args, workspace=workspace)
 
 
-def analyze_handler(args: str) -> str:
+def analyze_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /analyze command."""
-    return analyze_python_file(args)
+    return analyze_python_file(args, workspace)
 
 
-def functions_handler(args: str) -> str:
+def functions_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /functions command."""
-    return list_python_functions(args)
+    return list_python_functions(args, workspace)
 
 
-def classes_handler(args: str) -> str:
+def classes_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /classes command."""
-    return list_python_classes(args)
+    return list_python_classes(args, workspace)
 
 
-def imports_handler(args: str) -> str:
+def imports_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /imports command."""
-    return list_python_imports(args)
+    return list_python_imports(args, workspace)
 
 
-def index_handler(args: str) -> str:
+def index_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /index command."""
-    return format_project_index()
+    return format_project_index(workspace)
 
 
-def project_map_handler(args: str) -> str:
+def project_map_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /project-map command."""
-    return project_map()
+    return project_map(workspace)
 
 
-def where_handler(args: str) -> str:
+def where_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /where command."""
-    return find_symbol(args)
+    return find_symbol(args, workspace)
 
 
-def experiments_handler(args: str) -> str:
+def experiments_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /experiments command."""
     experiments = list_experiments()
 
@@ -145,12 +146,12 @@ def experiments_handler(args: str) -> str:
     return "\n".join(path.name for path in experiments)
 
 
-def knowledge_handler(args: str) -> str:
+def knowledge_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /knowledge command."""
     return search_knowledge(args) or "No knowledge found."
 
 
-def log_handler(args: str) -> str:
+def log_handler(args: str, workspace: Workspace | None = None) -> str:
     """Handle the /log command."""
     note = args.strip()
 

@@ -2,6 +2,7 @@ import json
 
 from app import file_tools, knowledge_search, ollama_client, prompt_builder
 from app.config import OLLAMA_NUM_CONTEXT
+from app.workspace import Workspace
 
 
 class FakeResponse:
@@ -21,10 +22,9 @@ def test_read_file_truncates_large_file(tmp_path, monkeypatch):
     note = project / "note.md"
     note.write_text("abcdef", encoding="utf-8")
 
-    monkeypatch.setattr(file_tools, "PROJECT_ROOT", project)
     monkeypatch.setattr(file_tools, "MAX_FILE_READ_CHARS", 3)
 
-    content = file_tools.read_file("note.md")
+    content = file_tools.read_file("note.md", Workspace(project))
 
     assert content.startswith("abc")
     assert "resource budget reached" in content
@@ -37,11 +37,10 @@ def test_search_files_limits_results(tmp_path, monkeypatch):
     for index in range(3):
         (project / f"match_{index}.txt").write_text("needle", encoding="utf-8")
 
-    monkeypatch.setattr(file_tools, "PROJECT_ROOT", project)
     monkeypatch.setattr(file_tools, "MAX_SEARCH_RESULTS", 2)
     monkeypatch.setattr(file_tools, "MAX_SEARCH_FILES", 10)
 
-    result = file_tools.search_files("needle")
+    result = file_tools.search_files("needle", Workspace(project))
 
     assert result.count("match_") == 2
     assert "resource budget reached" in result
@@ -52,10 +51,9 @@ def test_grep_files_limits_results(tmp_path, monkeypatch):
     project.mkdir()
     (project / "notes.txt").write_text("needle\nneedle\nneedle\n", encoding="utf-8")
 
-    monkeypatch.setattr(file_tools, "PROJECT_ROOT", project)
     monkeypatch.setattr(file_tools, "MAX_SEARCH_RESULTS", 2)
 
-    result = file_tools.grep_files("needle")
+    result = file_tools.grep_files("needle", Workspace(project))
 
     assert result.count("notes.txt") == 2
     assert "resource budget reached" in result

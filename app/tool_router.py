@@ -8,6 +8,7 @@ from app.command_registry import get_handler
 from app.agent_config import load_agent_definition
 from app.audit_log import write_audit_record
 from app.memory import ConversationMemory
+from app.workspace import Workspace
 
 
 def tool_allowed(agent_name: str | None, command_name: str) -> bool:
@@ -26,6 +27,7 @@ def route_tool(
     command: str,
     memory: ConversationMemory,
     agent_name: str | None = None,
+    workspace: Workspace | None = None,
 ) -> str | None:
     """
     Route simple slash commands to internal tools.
@@ -52,6 +54,8 @@ def route_tool(
             )
             return f"Tool not allowed for agent: {agent_name}"
 
+        if workspace is not None:
+            return handler(args, workspace=workspace)
         return handler(args)
 
     if command == "/memory":

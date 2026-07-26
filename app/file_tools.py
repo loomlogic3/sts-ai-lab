@@ -2,24 +2,20 @@
 Read-only file tools for STS AI Lab.
 """
 
-from pathlib import Path
-
 from app.config import (
     MAX_FILE_READ_CHARS,
     MAX_SEARCH_FILE_CHARS,
     MAX_SEARCH_FILES,
     MAX_SEARCH_RESULTS,
 )
+from app.workspace import (
+    PROTECTED_WORKSPACE_PARTS,
+    Workspace,
+    get_workspace,
+)
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
-BLOCKED_PARTS = {
-    ".env",
-    ".git",
-    "__pycache__",
-    "data",
-}
+BLOCKED_PARTS = PROTECTED_WORKSPACE_PARTS
 
 
 def truncate_text(text: str, max_chars: int) -> str:
@@ -33,36 +29,26 @@ def truncate_text(text: str, max_chars: int) -> str:
     return text[:max_chars] + "\n\n[Output truncated: resource budget reached.]"
 
 
-def safe_project_path(path_text: str) -> Path | None:
+def safe_project_path(
+    path_text: str,
+    workspace: Workspace | None = None,
+):
     """
     Resolve a user path and ensure it stays inside the project root.
     """
 
-    raw_path = Path(path_text).expanduser()
-
-    if raw_path.is_absolute():
-        return None
-
-    if ".." in raw_path.parts:
-        return None
-
-    candidate = (PROJECT_ROOT / raw_path).resolve()
-
-    if not candidate.is_relative_to(PROJECT_ROOT):
-        return None
-
-    if any(part in BLOCKED_PARTS for part in candidate.relative_to(PROJECT_ROOT).parts):
-        return None
-
-    return candidate
+    return get_workspace(workspace).resolve_path(path_text)
 
 
-def read_file(path_text: str) -> str:
+def read_file(
+    path_text: str,
+    workspace: Workspace | None = None,
+) -> str:
     """
     Safely read a project file.
     """
 
-    path = safe_project_path(path_text)
+    path = safe_project_path(path_text, workspace)
 
     if path is None:
         return "Blocked: this path is not allowed."
@@ -79,17 +65,20 @@ def read_file(path_text: str) -> str:
     )
 
 
-def project_tree(max_depth: int = 2) -> str:
+def project_tree(
+    max_depth: int = 2,
+    workspace: Workspace | None = None,
+) -> str:
     """
     Safely list project files up to a limited depth.
     """
 
+    active_workspace = get_workspace(workspace)
     lines = []
 
-    for path in sorted(PROJECT_ROOT.rglob("*")):
-        relative = path.relative_to(PROJECT_ROOT)
-
-        if any(part in BLOCKED_PARTS for part in relative.parts):
+    for path in sorted(active_workspace.root.rglob("*")):
+        relative = active_workspace.relative_path(path)
+        if relative is None:
             continue
 
         if path.name.startswith(".DS_Store"):
@@ -107,7 +96,10 @@ def project_tree(max_depth: int = 2) -> str:
     return "\n".join(lines) or "No files found."
 
 
-def search_files(keyword: str) -> str:
+def search_files(
+    keyword: str,
+    workspace: Workspace | None = None,
+) -> str:
     """
     Safely search project files for a keyword.
     """
@@ -117,13 +109,13 @@ def search_files(keyword: str) -> str:
     if not keyword:
         return "Usage: /search <keyword>"
 
+    active_workspace = get_workspace(workspace)
     matches = []
     scanned_files = 0
 
-    for path in sorted(PROJECT_ROOT.rglob("*")):
-        relative = path.relative_to(PROJECT_ROOT)
-
-        if any(part in BLOCKED_PARTS for part in relative.parts):
+    for path in sorted(active_workspace.root.rglob("*")):
+        relative = active_workspace.relative_path(path)
+        if relative is None:
             continue
 
         if not path.is_file():
@@ -156,7 +148,10 @@ def search_files(keyword: str) -> str:
     return result
 
 
-def grep_files(keyword: str) -> str:
+def grep_files(
+    keyword: str,
+    workspace: Workspace | None = None,
+) -> str:
     """
     Search safe project files and return matching lines with line numbers.
     """
@@ -166,13 +161,13 @@ def grep_files(keyword: str) -> str:
     if not keyword:
         return "Usage: /grep <keyword>"
 
+    active_workspace = get_workspace(workspace)
     matches = []
     scanned_files = 0
 
-    for path in sorted(PROJECT_ROOT.rglob("*")):
-        relative = path.relative_to(PROJECT_ROOT)
-
-        if any(part in BLOCKED_PARTS for part in relative.parts):
+    for path in sorted(active_workspace.root.rglob("*")):
+        relative = active_workspace.relative_path(path)
+        if relative is None:
             continue
 
         if not path.is_file():
@@ -209,19 +204,19 @@ def grep_files(keyword: str) -> str:
     return result
 
 
-def find_todos() -> str:
+def find_todos(workspace: Workspace | None = None) -> str:
     """
     Find TODO/FIXME notes in safe project files.
     """
 
     keywords = ("TODO", "FIXME")
+    active_workspace = get_workspace(workspace)
     matches = []
     scanned_files = 0
 
-    for path in sorted(PROJECT_ROOT.rglob("*")):
-        relative = path.relative_to(PROJECT_ROOT)
-
-        if any(part in BLOCKED_PARTS for part in relative.parts):
+    for path in sorted(active_workspace.root.rglob("*")):
+        relative = active_workspace.relative_path(path)
+        if relative is None:
             continue
 
         if not path.is_file():

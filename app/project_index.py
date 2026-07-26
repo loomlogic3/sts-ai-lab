@@ -5,18 +5,33 @@ Project index service for STS AI Lab.
 import ast
 from pathlib import Path
 
-from app.file_tools import BLOCKED_PARTS
+from app.workspace import Workspace, get_workspace
 
 
-def index_python_file(path: Path) -> dict:
+def index_python_file(
+    path: str | Path,
+    workspace: Workspace | None = None,
+) -> dict:
     """
     Index imports, functions, and classes in a Python file.
     """
 
+    active_workspace = get_workspace(workspace)
+    resolved_path = active_workspace.resolve_path(path)
+    file_name = str(path)
+
+    if resolved_path is None or not resolved_path.is_file():
+        return {
+            "file": file_name,
+            "imports": [],
+            "functions": [],
+            "classes": [],
+        }
+
     try:
-        source = path.read_text(encoding="utf-8")
+        source = resolved_path.read_text(encoding="utf-8")
         tree = ast.parse(source)
-    except (UnicodeDecodeError, SyntaxError):
+    except (OSError, UnicodeDecodeError, SyntaxError):
         return {
             "file": str(path),
             "imports": [],
@@ -50,28 +65,34 @@ def index_python_file(path: Path) -> dict:
     }
 
 
-def build_project_index() -> list[dict]:
+def build_project_index(
+    workspace: Workspace | None = None,
+) -> list[dict]:
     """
     Build an index of safe Python project files.
     """
 
+    active_workspace = get_workspace(workspace)
     results = []
 
-    for path in sorted(Path(".").rglob("*.py")):
-        if any(part in BLOCKED_PARTS for part in path.parts):
+    for path in sorted(active_workspace.root.rglob("*.py")):
+        relative = active_workspace.relative_path(path)
+        if relative is None or not path.is_file():
             continue
 
-        results.append(index_python_file(path))
+        results.append(index_python_file(relative, active_workspace))
 
     return results
 
 
-def format_project_index() -> str:
+def format_project_index(
+    workspace: Workspace | None = None,
+) -> str:
     """
     Format the project index for display.
     """
 
-    index = build_project_index()
+    index = build_project_index(workspace)
 
     lines = ["STS AI Lab Project Index", ""]
 
@@ -98,7 +119,10 @@ def format_project_index() -> str:
     return "\n".join(lines)
 
 
-def find_symbol(symbol: str) -> str:
+def find_symbol(
+    symbol: str,
+    workspace: Workspace | None = None,
+) -> str:
     """
     Find where a symbol appears in the Python project index.
     """
@@ -110,7 +134,7 @@ def find_symbol(symbol: str) -> str:
 
     matches = []
 
-    for item in build_project_index():
+    for item in build_project_index(workspace):
         file_path = item["file"]
 
         if symbol in item["functions"]:
@@ -128,12 +152,14 @@ def find_symbol(symbol: str) -> str:
     return "\n".join(matches)
 
 
-def project_map() -> str:
+def project_map(
+    workspace: Workspace | None = None,
+) -> str:
     """
     Build a simple architecture map from the Python project index.
     """
 
-    index = build_project_index()
+    index = build_project_index(workspace)
 
     lines = [
         "STS AI Lab Project Map",

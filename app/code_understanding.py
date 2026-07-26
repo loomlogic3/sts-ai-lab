@@ -11,14 +11,27 @@ from app.audit_log import write_audit_record
 from app.config import MAX_CODE_EXPLANATION_CHARS
 from app.file_tools import read_file
 from app.model_execution import execute_model
+from app.workspace import Workspace
 
 
-def explain_python_file(path: str) -> str:
+def _read_workspace_file(
+    path: str,
+    workspace: Workspace | None,
+) -> str:
+    if workspace is None:
+        return read_file(path)
+    return read_file(path, workspace)
+
+
+def explain_python_file(
+    path: str,
+    workspace: Workspace | None = None,
+) -> str:
     """
     Explain a Python file using Python's AST instead of the LLM.
     """
 
-    source = read_file(path)
+    source = _read_workspace_file(path, workspace)
 
     if source.startswith("Blocked") or source.startswith("File not found"):
         return source
@@ -73,7 +86,11 @@ def explain_python_file(path: str) -> str:
     return "\n".join(lines)
 
 
-def explain_file(path: str, model: str | None = None) -> str:
+def explain_file(
+    path: str,
+    model: str | None = None,
+    workspace: Workspace | None = None,
+) -> str:
     """
     Explain the purpose of a project file.
 
@@ -82,9 +99,9 @@ def explain_file(path: str, model: str | None = None) -> str:
     """
 
     if path.endswith(".py"):
-        return explain_python_file(path)
+        return explain_python_file(path, workspace)
 
-    source = read_file(path)
+    source = _read_workspace_file(path, workspace)
 
     if source.startswith("Blocked") or source.startswith("File not found"):
         return source
@@ -143,12 +160,15 @@ SOURCE:
     return result.response
 
 
-def list_python_functions(path: str) -> str:
+def list_python_functions(
+    path: str,
+    workspace: Workspace | None = None,
+) -> str:
     """
     List functions in a Python file.
     """
 
-    source = read_file(path)
+    source = _read_workspace_file(path, workspace)
 
     if source.startswith("Blocked") or source.startswith("File not found"):
         return source
@@ -173,12 +193,15 @@ def list_python_functions(path: str) -> str:
     return "\n".join(f"- {name}" for name in sorted(functions))
 
 
-def list_python_imports(path: str) -> str:
+def list_python_imports(
+    path: str,
+    workspace: Workspace | None = None,
+) -> str:
     """
     List imports in a Python file.
     """
 
-    source = read_file(path)
+    source = _read_workspace_file(path, workspace)
 
     if source.startswith("Blocked") or source.startswith("File not found"):
         return source
@@ -207,12 +230,15 @@ def list_python_imports(path: str) -> str:
     return "\n".join(f"- {name}" for name in sorted(set(imports)))
 
 
-def list_python_classes(path: str) -> str:
+def list_python_classes(
+    path: str,
+    workspace: Workspace | None = None,
+) -> str:
     """
     List classes in a Python file.
     """
 
-    source = read_file(path)
+    source = _read_workspace_file(path, workspace)
 
     if source.startswith("Blocked") or source.startswith("File not found"):
         return source
@@ -237,7 +263,10 @@ def list_python_classes(path: str) -> str:
     return "\n".join(f"- {name}" for name in sorted(classes))
 
 
-def analyze_python_file(path: str) -> str:
+def analyze_python_file(
+    path: str,
+    workspace: Workspace | None = None,
+) -> str:
     """
     Produce a fast analysis report for a Python file.
     """
@@ -246,16 +275,16 @@ def analyze_python_file(path: str) -> str:
         f"Analysis: {path}",
         "",
         "Imports:",
-        list_python_imports(path),
+        list_python_imports(path, workspace),
         "",
         "Classes:",
-        list_python_classes(path),
+        list_python_classes(path, workspace),
         "",
         "Functions:",
-        list_python_functions(path),
+        list_python_functions(path, workspace),
         "",
         "Explanation:",
-        explain_file(path),
+        explain_file(path, workspace=workspace),
     ]
 
     return "\n".join(lines)
