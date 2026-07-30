@@ -345,6 +345,7 @@ def test_approval_record_contains_control_metadata_only(workspace, store):
         "status",
         "decided_by",
         "decided_at",
+        "consumed_at",
     }
     for forbidden_field in (
         "prompt",

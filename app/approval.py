@@ -3,7 +3,9 @@ Approval engine for STS AI Lab.
 """
 
 import json
+import os
 import re
+import threading
 import uuid
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
@@ -21,6 +23,7 @@ MAX_APPROVAL_IDENTITY_CHARS = 128
 _APPROVAL_ID_PATTERN = re.compile(r"^[a-f0-9]{32}$")
 _ACTION_TYPE_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 _WORKSPACE_ID_PATTERN = re.compile(r"^workspace_[a-f0-9]{64}$")
+_APPROVAL_CLAIM_LOCK = threading.Lock()
 
 
 class ApprovalStatus(str, Enum):
@@ -46,6 +49,7 @@ class ApprovalRequest:
     status: ApprovalStatus
     decided_by: str | None = None
     decided_at: datetime | None = None
+    consumed_at: datetime | None = None
 
 
 class ApprovalStore:
@@ -80,6 +84,39 @@ class ApprovalStore:
             return None
 
         return _approval_from_record(record, expected_id=approval_id)
+
+    def acquire_claim_lock(
+        self,
+        approval_id: str,
+    ) -> tuple[int, Path] | None:
+        path = self._path_for(approval_id)
+        if path is None:
+            return None
+
+        lock_path = path.with_suffix(".claim")
+        try:
+            lock_path.parent.mkdir(parents=True, exist_ok=True)
+            descriptor = os.open(
+                lock_path,
+                os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+                0o600,
+            )
+        except OSError:
+            return None
+        return descriptor, lock_path
+
+    def release_claim_lock(
+        self,
+        claim_lock: tuple[int, Path],
+    ) -> None:
+        descriptor, lock_path = claim_lock
+        try:
+            os.close(descriptor)
+        finally:
+            try:
+                lock_path.unlink()
+            except OSError:
+                pass
 
     def _path_for(self, approval_id: object) -> Path | None:
         if (
@@ -226,9 +263,73 @@ def is_action_authorized(
             and approval.expires_at > current_time
             and approval.workspace_identity == workspace_identity
             and approval.action_type == action_type
+            and approval.consumed_at is None
         )
     except Exception:
         return False
+
+
+def claim_action_authorization(
+    *,
+    approval_id: str,
+    action_type: str,
+    workspace_identity: str,
+    store: ApprovalStore | None = None,
+    now: datetime | None = None,
+) -> datetime | None:
+    """
+    Atomically claim one approved action for single use in this process.
+    """
+
+    active_store = store or ApprovalStore()
+    claimed_at = _utc_time(now)
+    with _APPROVAL_CLAIM_LOCK:
+        claim_lock = active_store.acquire_claim_lock(approval_id)
+        if claim_lock is None:
+            return None
+        try:
+            if not is_action_authorized(
+                approval_id=approval_id,
+                action_type=action_type,
+                workspace_identity=workspace_identity,
+                store=active_store,
+                now=claimed_at,
+            ):
+                return None
+
+            approval = active_store.load(approval_id)
+            if approval is None or approval.consumed_at is not None:
+                return None
+
+            active_store.save(replace(approval, consumed_at=claimed_at))
+            return claimed_at
+        finally:
+            active_store.release_claim_lock(claim_lock)
+
+
+def restore_action_authorization(
+    approval_id: str,
+    *,
+    claimed_at: datetime,
+    store: ApprovalStore | None = None,
+) -> bool:
+    """
+    Restore an exact claim when its privileged action did not complete.
+    """
+
+    active_store = store or ApprovalStore()
+    with _APPROVAL_CLAIM_LOCK:
+        claim_lock = active_store.acquire_claim_lock(approval_id)
+        if claim_lock is None:
+            return False
+        try:
+            approval = active_store.load(approval_id)
+            if approval is None or approval.consumed_at != _utc_time(claimed_at):
+                return False
+            active_store.save(replace(approval, consumed_at=None))
+            return True
+        finally:
+            active_store.release_claim_lock(claim_lock)
 
 
 def _record_decision(
@@ -278,6 +379,11 @@ def _approval_to_record(approval: ApprovalRequest) -> dict:
             if approval.decided_at is not None
             else None
         ),
+        "consumed_at": (
+            approval.consumed_at.isoformat()
+            if approval.consumed_at is not None
+            else None
+        ),
     }
 
 
@@ -303,6 +409,11 @@ def _approval_from_record(
             decided_at=(
                 _parse_time(record["decided_at"])
                 if record.get("decided_at") is not None
+                else None
+            ),
+            consumed_at=(
+                _parse_time(record["consumed_at"])
+                if record.get("consumed_at") is not None
                 else None
             ),
         )
@@ -331,13 +442,25 @@ def _validate_loaded_approval(
     if approval.decided_by is not None:
         _validate_identity(approval.decided_by, "decided_by")
     if approval.status is ApprovalStatus.PENDING:
-        if approval.decided_by is not None or approval.decided_at is not None:
+        if (
+            approval.decided_by is not None
+            or approval.decided_at is not None
+            or approval.consumed_at is not None
+        ):
             raise ValueError("Pending approvals cannot contain a decision.")
     if approval.status in {ApprovalStatus.APPROVED, ApprovalStatus.REJECTED}:
         if approval.decided_by is None or approval.decided_at is None:
             raise ValueError("Decided approvals require decision metadata.")
         if approval.decided_by == approval.requested_by:
             raise ValueError("Requesters cannot approve their own requests.")
+    if (
+        approval.consumed_at is not None
+        and approval.status not in {
+            ApprovalStatus.APPROVED,
+            ApprovalStatus.EXPIRED,
+        }
+    ):
+        raise ValueError("Only approved requests can carry consumption metadata.")
 
 
 def _validate_control_metadata(
