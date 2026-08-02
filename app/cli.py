@@ -2,6 +2,7 @@ import sys
 
 from app.agents import print_agents
 from app.chat import start_chat
+from app.cli_status import CLIStatusRenderer
 from app.experiment_logger import log_experiment
 from app.experiments import print_experiments
 from app.input_classifier import InputType, classify
@@ -68,7 +69,8 @@ def run_mentor_chat() -> None:
                 print()
                 continue
 
-        answer = ask_mentor(question, memory)
+        with CLIStatusRenderer() as status:
+            answer = ask_mentor(question, memory, on_status=status.update)
 
         print()
         print(f"STS Mentor: {answer}")

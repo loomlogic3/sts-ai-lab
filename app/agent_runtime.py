@@ -14,6 +14,11 @@ from app.memory import ConversationMemory
 from app.model_execution import execute_model
 from app.prompt_builder import build_prompt
 from app.response_processor import clean_response
+from app.runtime_status import (
+    RuntimeStage,
+    RuntimeStatusCallback,
+    RuntimeStatusEvent,
+)
 
 
 @dataclass(frozen=True)
@@ -51,6 +56,7 @@ def execute_agent(
     question: str,
     memory: ConversationMemory,
     options: AgentRuntimeOptions | None = None,
+    on_status: RuntimeStatusCallback | None = None,
 ) -> str:
     """
     Execute an agent through the shared local runtime.
@@ -61,6 +67,7 @@ def execute_agent(
         question=question,
         memory=memory,
         options=options,
+        on_status=on_status,
     ).response
 
 
@@ -69,6 +76,7 @@ def execute_agent_result(
     question: str,
     memory: ConversationMemory,
     options: AgentRuntimeOptions | None = None,
+    on_status: RuntimeStatusCallback | None = None,
 ) -> AgentRuntimeResult:
     """
     Execute an agent and return its structured canonical runtime outcome.
@@ -76,11 +84,15 @@ def execute_agent_result(
 
     started_at = perf_counter()
     options = options or AgentRuntimeOptions()
-    agent_definition = load_agent_definition(agent_name)
-    model = agent_definition["model"]
+    model = None
 
     try:
+        _emit_status(on_status, "loading_agent", agent_name)
+        agent_definition = load_agent_definition(agent_name)
+        model = agent_definition["model"]
+        _emit_status(on_status, "reading_memory", agent_name, model)
         conversation = memory.context()[-MAX_CONVERSATION_CHARS:]
+        _emit_status(on_status, "searching_knowledge", agent_name, model)
         knowledge = search_knowledge(question)
 
         if options.knowledge_chars is not None:
@@ -106,6 +118,7 @@ def execute_agent_result(
             )
             conversation = f"{config_context}\n{conversation}"
 
+        _emit_status(on_status, "building_prompt", agent_name, model)
         prompt = build_prompt(
             system_prompt=agent_definition["prompt_text"],
             conversation=conversation,
@@ -113,12 +126,14 @@ def execute_agent_result(
             knowledge=knowledge,
         )
 
+        _emit_status(on_status, "waiting_for_model", agent_name, model)
         model_result = execute_model(
             model=model,
             prompt=prompt,
             temperature=agent_definition["temperature"],
             num_predict=options.num_predict,
         )
+        _emit_status(on_status, "processing_response", agent_name, model)
         answer = clean_response(model_result.response)
 
         if model_result.status != "success":
@@ -130,16 +145,19 @@ def execute_agent_result(
                 memory_persisted=False,
                 error_category=model_result.error_category,
             )
-            return AgentRuntimeResult(
+            result = AgentRuntimeResult(
                 response=answer,
                 status=model_result.status,
                 model=model,
                 memory_persisted=False,
                 error_category=model_result.error_category,
             )
+            _emit_status(on_status, model_result.status, agent_name, model)
+            return result
 
         memory_persisted = False
         if options.persist_memory:
+            _emit_status(on_status, "saving_memory", agent_name, model)
             memory.add("User", question)
             memory.add(options.memory_role or agent_name, answer)
             memory.save()
@@ -152,22 +170,40 @@ def execute_agent_result(
             status="success",
             memory_persisted=memory_persisted,
         )
-        return AgentRuntimeResult(
+        result = AgentRuntimeResult(
             response=answer,
             status="success",
             model=model,
             memory_persisted=memory_persisted,
         )
+        _emit_status(on_status, "complete", agent_name, model)
+        return result
     except Exception:
-        _audit_execution(
-            started_at=started_at,
-            agent_name=agent_name,
-            model=model,
-            status="failure",
-            memory_persisted=False,
-            error_category="runtime_error",
-        )
+        if model is not None:
+            _audit_execution(
+                started_at=started_at,
+                agent_name=agent_name,
+                model=model,
+                status="failure",
+                memory_persisted=False,
+                error_category="runtime_error",
+            )
+        _emit_status(on_status, "failure", agent_name, model)
         raise
+
+
+def _emit_status(
+    callback: RuntimeStatusCallback | None,
+    stage: RuntimeStage,
+    agent_name: str,
+    model: str | None = None,
+) -> None:
+    if callback is None:
+        return
+    try:
+        callback(RuntimeStatusEvent(stage, agent_name, model))
+    except Exception:
+        pass
 
 
 def _audit_execution(

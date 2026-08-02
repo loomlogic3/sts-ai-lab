@@ -394,3 +394,22 @@ def test_existing_execute_agent_still_returns_string(monkeypatch):
         "question",
         FakeMemory(),
     ) == "answer"
+
+
+def test_intelligence_caller_emits_no_terminal_output(
+    isolated_memory,
+    monkeypatch,
+    capsys,
+):
+    monkeypatch.setattr(
+        intelligence,
+        "execute_agent_result",
+        lambda **kwargs: fake_runtime_result(),
+    )
+
+    response = invoke_intelligence(request())
+
+    assert response.content == "answer"
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
