@@ -5,6 +5,7 @@ from app.agent_config import load_agent_definition
 
 from app.agent_registry import list_agents
 from app.ai_engine import answer_with_agent
+from app.cli_status import CLIStatusRenderer
 from app.input_classifier import InputType, classify
 from app.memory import ConversationMemory
 from app.tool_router import route_tool
@@ -81,7 +82,13 @@ def start_chat(agent_name: str) -> None:
             print()
             continue
 
-        answer = answer_with_agent(agent_name, question, memory)
+        with CLIStatusRenderer() as status:
+            answer = answer_with_agent(
+                agent_name,
+                question,
+                memory,
+                on_status=status.update,
+            )
 
         print()
         print(f"{agent_name}: {answer}")
