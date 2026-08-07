@@ -35,7 +35,12 @@ def start_chat(agent_name: str) -> None:
     print()
 
     while True:
-        question = input("You: ")
+        try:
+            question = input("You: ")
+        except (KeyboardInterrupt, EOFError):
+            print()
+            print("Goodbye.")
+            break
 
         if not question.strip():
             continue
@@ -82,13 +87,19 @@ def start_chat(agent_name: str) -> None:
             print()
             continue
 
-        with CLIStatusRenderer() as status:
-            answer = answer_with_agent(
-                agent_name,
-                question,
-                memory,
-                on_status=status.update,
-            )
+        try:
+            with CLIStatusRenderer() as status:
+                answer = answer_with_agent(
+                    agent_name,
+                    question,
+                    memory,
+                    on_status=status.update,
+                )
+        except KeyboardInterrupt:
+            print()
+            print("Request cancelled.")
+            print()
+            continue
 
         print()
         print(f"{agent_name}: {answer}")

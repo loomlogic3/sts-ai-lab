@@ -64,6 +64,22 @@ def test_repeated_requests_do_not_leak_threads():
     assert active_status_threads() == []
 
 
+def test_repeated_cancellation_does_not_leak_threads():
+    for _ in range(5):
+        with pytest.raises(KeyboardInterrupt):
+            with CLIStatusRenderer(
+                stream=InteractiveStream(),
+                refresh_interval=0.001,
+            ) as renderer:
+                renderer.update(
+                    RuntimeStatusEvent("waiting_for_model", "STS Mentor")
+                )
+                time.sleep(0.002)
+                raise KeyboardInterrupt
+
+        assert active_status_threads() == []
+
+
 def test_non_tty_renderer_is_silent_and_does_not_start_thread():
     stream = io.StringIO()
 
