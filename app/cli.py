@@ -27,7 +27,12 @@ def run_mentor_chat() -> None:
     print()
 
     while True:
-        question = input("You: ")
+        try:
+            question = input("You: ")
+        except (KeyboardInterrupt, EOFError):
+            print()
+            print("Goodbye.")
+            break
 
         if not question.strip():
             continue
@@ -69,8 +74,14 @@ def run_mentor_chat() -> None:
                 print()
                 continue
 
-        with CLIStatusRenderer() as status:
-            answer = ask_mentor(question, memory, on_status=status.update)
+        try:
+            with CLIStatusRenderer() as status:
+                answer = ask_mentor(question, memory, on_status=status.update)
+        except KeyboardInterrupt:
+            print()
+            print("Request cancelled.")
+            print()
+            continue
 
         print()
         print(f"STS Mentor: {answer}")

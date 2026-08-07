@@ -12,15 +12,17 @@ from app.model_execution import ModelExecutionResult
 class FakeMemory:
     def __init__(self, context="private conversation"):
         self.context_text = context
+        self.messages = []
+        self.save_calls = 0
 
     def context(self):
         return self.context_text
 
     def add(self, role, content):
-        pass
+        self.messages.append((role, content))
 
     def save(self):
-        pass
+        self.save_calls += 1
 
 
 @pytest.fixture
@@ -177,6 +179,38 @@ def test_callback_failure_does_not_break_execution(runtime, monkeypatch):
         FakeMemory(),
         on_status=broken_callback,
     ) == "answer"
+
+
+def test_non_cli_runtime_propagates_keyboard_interrupt(runtime, monkeypatch):
+    monkeypatch.setattr(
+        agent_runtime,
+        "execute_model",
+        lambda **kwargs: (_ for _ in ()).throw(KeyboardInterrupt()),
+    )
+    monkeypatch.setattr(
+        agent_runtime,
+        "_audit_execution",
+        lambda **kwargs: pytest.fail("cancellation must not be audited as a result"),
+    )
+    memory = FakeMemory()
+
+    with pytest.raises(KeyboardInterrupt):
+        agent_runtime.execute_agent("code_agent", "question", memory)
+
+    assert memory.messages == []
+    assert memory.save_calls == 0
+
+
+def test_lower_runtime_layers_contain_no_cli_cancellation_handling():
+    for filename in (
+        "agent_runtime.py",
+        "model_execution.py",
+        "ollama_client.py",
+        "intelligence.py",
+    ):
+        source = Path("app", filename).read_text(encoding="utf-8")
+        assert "KeyboardInterrupt" not in source
+        assert "Request cancelled." not in source
 
 
 def test_status_events_contain_control_metadata_only(runtime, monkeypatch):
