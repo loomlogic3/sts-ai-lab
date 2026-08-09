@@ -24,5 +24,9 @@ MAX_SEARCH_RESULTS = 50
 MAX_CODE_EXPLANATION_CHARS = 2500
 OLLAMA_NUM_CONTEXT = 1024
 OLLAMA_DEFAULT_NUM_PREDICT = 120
-OLLAMA_TIMEOUT_SECONDS = 60
+# CPU-only local inference can exceed one minute for full STS prompts even when
+# short warm requests complete quickly. Keep the transport bounded while
+# allowing cold model loading and constrained-hardware prompt evaluation.
+OLLAMA_TIMEOUT_SECONDS = 180
+OLLAMA_KEEP_ALIVE = "30m"
 MENTOR_NUM_PREDICT = 80

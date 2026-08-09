@@ -4,16 +4,21 @@ from pathlib import Path
 import pytest
 
 from app import model_execution
+from app.ollama_client import OllamaResult
 
 
 def test_model_execution_propagates_model_and_options(monkeypatch):
     captured = {}
 
-    def fake_run_ollama(model, prompt, **options):
+    def fake_run_ollama_result(model, prompt, **options):
         captured["call"] = (model, prompt, options)
-        return "answer"
+        return OllamaResult("answer")
 
-    monkeypatch.setattr(model_execution, "run_ollama", fake_run_ollama)
+    monkeypatch.setattr(
+        model_execution,
+        "run_ollama_result",
+        fake_run_ollama_result,
+    )
 
     result = model_execution.execute_model(
         model="canonical-model",
@@ -25,6 +30,7 @@ def test_model_execution_propagates_model_and_options(monkeypatch):
     assert result.response == "answer"
     assert result.status == "success"
     assert result.error_category is None
+    assert result.metrics.prompt_chars == len("private prompt")
     assert captured["call"] == (
         "canonical-model",
         "private prompt",
@@ -35,11 +41,15 @@ def test_model_execution_propagates_model_and_options(monkeypatch):
 def test_default_output_limit_remains_owned_by_ollama_client(monkeypatch):
     captured = {}
 
-    def fake_run_ollama(model, prompt, **options):
+    def fake_run_ollama_result(model, prompt, **options):
         captured["options"] = options
-        return "answer"
+        return OllamaResult("answer")
 
-    monkeypatch.setattr(model_execution, "run_ollama", fake_run_ollama)
+    monkeypatch.setattr(
+        model_execution,
+        "run_ollama_result",
+        fake_run_ollama_result,
+    )
 
     model_execution.execute_model(
         model="canonical-model",
@@ -48,6 +58,43 @@ def test_default_output_limit_remains_owned_by_ollama_client(monkeypatch):
     )
 
     assert captured["options"] == {"temperature": 0.2}
+
+
+def test_model_execution_exposes_privacy_safe_metrics(monkeypatch):
+    monkeypatch.setattr(
+        model_execution,
+        "run_ollama_result",
+        lambda *args, **kwargs: OllamaResult(
+            response="private response",
+            total_duration_ms=2170,
+            load_duration_ms=400,
+            prompt_eval_count=56,
+            prompt_eval_duration_ms=240,
+            eval_count=8,
+            eval_duration_ms=1520,
+            prompt_tokens_per_second=233.33,
+            output_tokens_per_second=5.26,
+        ),
+    )
+
+    result = model_execution.execute_model(
+        model="canonical-model",
+        prompt="private user prompt",
+        temperature=0.2,
+    )
+
+    assert result.metrics.total_duration_ms == 2170
+    assert result.metrics.load_duration_ms == 400
+    assert result.metrics.prompt_eval_count == 56
+    assert result.metrics.prompt_eval_duration_ms == 240
+    assert result.metrics.eval_count == 8
+    assert result.metrics.eval_duration_ms == 1520
+    assert result.metrics.prompt_tokens_per_second == 233.33
+    assert result.metrics.output_tokens_per_second == 5.26
+    assert result.metrics.prompt_chars == len("private user prompt")
+    serialized = repr(result.metrics)
+    assert "private user prompt" not in serialized
+    assert "private response" not in serialized
 
 
 @pytest.mark.parametrize(
@@ -78,8 +125,8 @@ def test_model_execution_classifies_existing_ollama_outcomes(
 ):
     monkeypatch.setattr(
         model_execution,
-        "run_ollama",
-        lambda *args, **kwargs: response,
+        "run_ollama_result",
+        lambda *args, **kwargs: OllamaResult(response),
     )
 
     result = model_execution.execute_model(
@@ -105,17 +152,20 @@ def test_raw_ollama_usage_is_limited_to_approved_modules():
 
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
-                imported_run_ollama = (
+                imported_ollama_runner = (
                     node.module == "app.ollama_client"
-                    and any(alias.name == "run_ollama" for alias in node.names)
+                    and any(
+                        alias.name in {"run_ollama", "run_ollama_result"}
+                        for alias in node.names
+                    )
                 )
-                if imported_run_ollama and path.name not in approved_modules:
+                if imported_ollama_runner and path.name not in approved_modules:
                     violations.append(str(path))
 
             if (
                 isinstance(node, ast.Call)
                 and isinstance(node.func, ast.Name)
-                and node.func.id == "run_ollama"
+                and node.func.id in {"run_ollama", "run_ollama_result"}
                 and path.name not in approved_modules
             ):
                 violations.append(str(path))

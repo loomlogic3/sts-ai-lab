@@ -91,6 +91,15 @@ def test_successful_execution_writes_one_private_audit_record(
     assert records[0]["error_category"] is None
     assert records[0]["timestamp"].endswith("+00:00")
     assert isinstance(records[0]["duration_ms"], int)
+    assert set(records[0]) == {
+        "timestamp",
+        "agent_name",
+        "model",
+        "status",
+        "duration_ms",
+        "memory_persisted",
+        "error_category",
+    }
 
     serialized = audit_path.read_text(encoding="utf-8")
     for private_value in (
