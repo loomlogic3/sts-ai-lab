@@ -12,6 +12,7 @@ from app.intelligence import (
     invoke_intelligence,
 )
 from app.model_execution import ModelExecutionResult
+from app.prompt_builder import PromptBuildResult, PromptProfile
 
 
 def request(**overrides):
@@ -161,8 +162,11 @@ def test_ephemeral_context_reaches_prompt_but_is_not_persisted(
     monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "")
     monkeypatch.setattr(
         agent_runtime,
-        "build_prompt",
-        lambda **kwargs: captured.update(kwargs) or "prompt",
+        "build_prompt_result",
+        lambda **kwargs: (
+            captured.update(kwargs)
+            or PromptBuildResult("prompt", PromptProfile())
+        ),
     )
     monkeypatch.setattr(
         agent_runtime,
@@ -176,7 +180,7 @@ def test_ephemeral_context_reaches_prompt_but_is_not_persisted(
 
     assert response.status == "success"
     assert response.memory_persisted is False
-    assert "temporary product facts" in captured["conversation"]
+    assert captured["caller_context"] == "temporary product facts"
     assert not isolated_memory.exists()
 
 

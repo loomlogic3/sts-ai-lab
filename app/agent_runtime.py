@@ -11,8 +11,8 @@ from app.audit_log import write_audit_record
 from app.config import MAX_CONVERSATION_CHARS
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
-from app.model_execution import execute_model
-from app.prompt_builder import build_prompt
+from app.model_execution import ModelExecutionMetrics, execute_model
+from app.prompt_builder import PromptProfile, build_prompt_result
 from app.response_processor import clean_response
 from app.runtime_status import (
     RuntimeStage,
@@ -39,6 +39,25 @@ AgentRuntimeStatus = Literal["success", "failure", "timeout"]
 
 
 @dataclass(frozen=True)
+class PreprocessingTimings:
+    """Monotonic wall-clock timings for major pre-model runtime stages."""
+
+    agent_loading_ms: int = 0
+    memory_preparation_ms: int = 0
+    knowledge_retrieval_ms: int = 0
+    prompt_construction_ms: int = 0
+
+
+@dataclass(frozen=True)
+class AgentExecutionProfile:
+    """Transient prompt and model performance metadata for one invocation."""
+
+    prompt_profile: PromptProfile = PromptProfile()
+    preprocessing: PreprocessingTimings = PreprocessingTimings()
+    model_metrics: ModelExecutionMetrics = ModelExecutionMetrics()
+
+
+@dataclass(frozen=True)
 class AgentRuntimeResult:
     """
     Structured outcome from one canonical agent execution.
@@ -49,6 +68,7 @@ class AgentRuntimeResult:
     model: str
     memory_persisted: bool
     error_category: str | None = None
+    profile: AgentExecutionProfile = AgentExecutionProfile()
 
 
 def execute_agent(
@@ -88,43 +108,50 @@ def execute_agent_result(
 
     try:
         _emit_status(on_status, "loading_agent", agent_name)
+        stage_started_at = perf_counter()
         agent_definition = load_agent_definition(agent_name)
+        agent_loading_ms = _elapsed_ms(stage_started_at)
         model = agent_definition["model"]
+
         _emit_status(on_status, "reading_memory", agent_name, model)
-        conversation = memory.context()[-MAX_CONVERSATION_CHARS:]
+        stage_started_at = perf_counter()
+        full_conversation = memory.context()
+        conversation_truncated = len(full_conversation) > MAX_CONVERSATION_CHARS
+        conversation = full_conversation[-MAX_CONVERSATION_CHARS:]
+        memory_preparation_ms = _elapsed_ms(stage_started_at)
+
         _emit_status(on_status, "searching_knowledge", agent_name, model)
+        stage_started_at = perf_counter()
         knowledge = search_knowledge(question)
-
+        knowledge_truncated = False
         if options.knowledge_chars is not None:
+            knowledge_truncated = len(knowledge) > options.knowledge_chars
             knowledge = knowledge[:options.knowledge_chars]
+        knowledge_retrieval_ms = _elapsed_ms(stage_started_at)
 
-        if options.caller_context:
-            caller_context = (
-                "Caller-provided context:\n"
-                f"{options.caller_context}"
-            )
-            conversation = (
-                f"{conversation}\n\n{caller_context}"
-                if conversation
-                else caller_context
-            )
-
+        agent_context = ""
         if options.include_agent_config:
-            config_context = (
+            agent_context = (
                 "Agent configuration:\n"
                 f"- Agent name: {agent_name}\n"
                 f"- Model: {model}\n"
                 f"- Description: {agent_definition['description']}\n"
             )
-            conversation = f"{config_context}\n{conversation}"
 
         _emit_status(on_status, "building_prompt", agent_name, model)
-        prompt = build_prompt(
+        stage_started_at = perf_counter()
+        prompt_result = build_prompt_result(
             system_prompt=agent_definition["prompt_text"],
             conversation=conversation,
             user_question=question,
             knowledge=knowledge,
+            caller_context=options.caller_context or "",
+            agent_context=agent_context,
+            conversation_truncated=conversation_truncated,
+            knowledge_truncated=knowledge_truncated,
         )
+        prompt_construction_ms = _elapsed_ms(stage_started_at)
+        prompt = prompt_result.prompt
 
         _emit_status(on_status, "waiting_for_model", agent_name, model)
         model_result = execute_model(
@@ -135,6 +162,16 @@ def execute_agent_result(
         )
         _emit_status(on_status, "processing_response", agent_name, model)
         answer = clean_response(model_result.response)
+        execution_profile = AgentExecutionProfile(
+            prompt_profile=prompt_result.profile,
+            preprocessing=PreprocessingTimings(
+                agent_loading_ms=agent_loading_ms,
+                memory_preparation_ms=memory_preparation_ms,
+                knowledge_retrieval_ms=knowledge_retrieval_ms,
+                prompt_construction_ms=prompt_construction_ms,
+            ),
+            model_metrics=model_result.metrics,
+        )
 
         if model_result.status != "success":
             _audit_execution(
@@ -151,6 +188,7 @@ def execute_agent_result(
                 model=model,
                 memory_persisted=False,
                 error_category=model_result.error_category,
+                profile=execution_profile,
             )
             _emit_status(on_status, model_result.status, agent_name, model)
             return result
@@ -175,6 +213,7 @@ def execute_agent_result(
             status="success",
             model=model,
             memory_persisted=memory_persisted,
+            profile=execution_profile,
         )
         _emit_status(on_status, "complete", agent_name, model)
         return result
@@ -204,6 +243,10 @@ def _emit_status(
         callback(RuntimeStatusEvent(stage, agent_name, model))
     except Exception:
         pass
+
+
+def _elapsed_ms(started_at: float) -> int:
+    return max(0, round((perf_counter() - started_at) * 1000))
 
 
 def _audit_execution(

@@ -1,6 +1,7 @@
 from app import agent_runtime, ai_engine, mentor
 from app.agent_runtime import AgentRuntimeOptions
 from app.model_execution import ModelExecutionResult
+from app.prompt_builder import PromptBuildResult, PromptProfile
 
 
 class FakeMemory:
@@ -71,9 +72,9 @@ def test_canonical_definition_supplies_runtime_metadata(monkeypatch):
 
     def fake_build_prompt(**kwargs):
         captured["prompt_parts"] = kwargs
-        return "built prompt"
+        return PromptBuildResult("built prompt", PromptProfile())
 
-    monkeypatch.setattr(agent_runtime, "build_prompt", fake_build_prompt)
+    monkeypatch.setattr(agent_runtime, "build_prompt_result", fake_build_prompt)
 
     def fake_execute_model(**kwargs):
         captured["model_execution"] = kwargs
@@ -89,7 +90,7 @@ def test_canonical_definition_supplies_runtime_metadata(monkeypatch):
     )
 
     assert captured["prompt_parts"]["system_prompt"] == "Canonical prompt"
-    assert "Canonical description" in captured["prompt_parts"]["conversation"]
+    assert "Canonical description" in captured["prompt_parts"]["agent_context"]
     assert captured["model_execution"] == {
         "model": "canonical-model",
         "prompt": "built prompt",
@@ -109,8 +110,11 @@ def test_conversation_and_knowledge_budgets_remain_enforced(monkeypatch):
     monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "knowledge")
     monkeypatch.setattr(
         agent_runtime,
-        "build_prompt",
-        lambda **kwargs: captured.update(kwargs) or "prompt",
+        "build_prompt_result",
+        lambda **kwargs: (
+            captured.update(kwargs)
+            or PromptBuildResult("prompt", PromptProfile())
+        ),
     )
     monkeypatch.setattr(
         agent_runtime,
