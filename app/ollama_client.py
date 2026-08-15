@@ -4,6 +4,7 @@ Ollama HTTP client for STS AI Lab.
 
 import json
 import math
+import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -16,13 +17,26 @@ from app.config import (
 )
 
 
-OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
+DEFAULT_OLLAMA_HOST = "http://127.0.0.1:11434"
+OLLAMA_URL = f"{DEFAULT_OLLAMA_HOST}/api/generate"
 
 OLLAMA_ERROR_PREFIXES = (
     "Ollama request timed out.",
     "Ollama connection failed:",
     "Ollama returned an invalid JSON response.",
 )
+
+
+def get_ollama_url() -> str:
+    """Return the resolved Ollama generate endpoint URL."""
+    base_url = (
+        os.getenv("OLLAMA_HOST")
+        or os.getenv("STS_OLLAMA_URL")
+        or DEFAULT_OLLAMA_HOST
+    ).strip().rstrip("/")
+    if base_url.endswith("/api/generate"):
+        return base_url
+    return f"{base_url}/api/generate"
 
 
 @dataclass(frozen=True)
@@ -87,7 +101,7 @@ def run_ollama_result(
     }
 
     request = urllib.request.Request(
-        OLLAMA_URL,
+        get_ollama_url(),
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"},
     )

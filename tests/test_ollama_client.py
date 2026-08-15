@@ -135,3 +135,33 @@ def test_timeout_response_text_and_bound_remain_deterministic(monkeypatch):
     )
     assert captured["timeout"] == 180
     assert 0 < captured["timeout"] < 600
+
+
+def test_get_ollama_url_default(monkeypatch):
+    monkeypatch.delenv("OLLAMA_HOST", raising=False)
+    monkeypatch.delenv("STS_OLLAMA_URL", raising=False)
+    assert ollama_client.get_ollama_url() == "http://127.0.0.1:11434/api/generate"
+
+
+def test_get_ollama_url_respects_ollama_host(monkeypatch):
+    monkeypatch.setenv("OLLAMA_HOST", "http://custom-host:11435")
+    assert ollama_client.get_ollama_url() == "http://custom-host:11435/api/generate"
+
+
+def test_get_ollama_url_respects_sts_ollama_url_with_existing_api_path(monkeypatch):
+    monkeypatch.delenv("OLLAMA_HOST", raising=False)
+    monkeypatch.setenv("STS_OLLAMA_URL", "http://remote-server:11434/api/generate")
+    assert ollama_client.get_ollama_url() == "http://remote-server:11434/api/generate"
+
+
+def test_run_ollama_sends_to_custom_host(monkeypatch):
+    monkeypatch.setenv("OLLAMA_HOST", "http://remote-host:11434")
+    captured = {}
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        return FakeResponse()
+
+    monkeypatch.setattr(ollama_client.urllib.request, "urlopen", fake_urlopen)
+    ollama_client.run_ollama("sts-fast", "hello")
+    assert captured["url"] == "http://remote-host:11434/api/generate"
