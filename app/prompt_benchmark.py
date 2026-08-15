@@ -12,6 +12,7 @@ from app.prompt_builder import PromptBuildResult, build_prompt_result
 
 
 VARIANT_NAMES = ("A", "B", "C", "D")
+DEFAULT_BENCHMARK_NUM_PREDICT = 2
 
 
 def _sized_fixture(seed: str, target_chars: int) -> str:
@@ -52,6 +53,8 @@ class BenchmarkResult:
     output_tokens_per_second: float
     total_duration_ms: int
     wall_duration_ms: int
+    benchmark_num_predict: int = DEFAULT_BENCHMARK_NUM_PREDICT
+    isolated_mode: bool = False
 
 
 @dataclass(frozen=True)
@@ -115,10 +118,12 @@ def run_benchmark(
     trials: int = 3,
     variants: tuple[str, ...] = VARIANT_NAMES,
     warm_model: bool = True,
+    num_predict: int = DEFAULT_BENCHMARK_NUM_PREDICT,
+    isolated: bool = False,
 ) -> tuple[list[BenchmarkResult], list[BenchmarkSummary]]:
     """Run controlled variants and return only content-free measurements."""
 
-    _validate_inputs(trials, variants)
+    _validate_inputs(trials, variants, num_predict, isolated)
     mentor = load_agent_definition("sts_mentor")
     prompts = build_variants()
 
@@ -142,7 +147,7 @@ def run_benchmark(
                 model=mentor["model"],
                 prompt=prompt_result.prompt,
                 temperature=mentor["temperature"],
-                num_predict=MENTOR_NUM_PREDICT,
+                num_predict=num_predict,
             )
             metrics = model_result.metrics
             results.append(
@@ -160,6 +165,8 @@ def run_benchmark(
                     eval_duration_ms=metrics.eval_duration_ms,
                     output_tokens_per_second=metrics.output_tokens_per_second,
                     total_duration_ms=metrics.total_duration_ms,
+                    benchmark_num_predict=num_predict,
+                    isolated_mode=isolated,
                     wall_duration_ms=model_result.duration_ms,
                 )
             )
@@ -209,13 +216,29 @@ def aggregate_results(
     return summaries
 
 
-def _validate_inputs(trials: int, variants: tuple[str, ...]) -> None:
+def _validate_inputs(
+    trials: int,
+    variants: tuple[str, ...],
+    num_predict: int,
+    isolated: bool,
+) -> None:
+    if num_predict < 1:
+        raise ValueError("num_predict must be at least 1")
+    if isolated and len(variants) != 1:
+        raise ValueError("isolated mode requires exactly one variant")
     if trials < 1:
         raise ValueError("Trials must be at least one.")
     if not variants or len(set(variants)) != len(variants):
         raise ValueError("Variants must be unique and non-empty.")
     if any(variant not in VARIANT_NAMES for variant in variants):
         raise ValueError("Unknown benchmark variant.")
+
+
+def _positive_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return parsed
 
 
 def main() -> None:
@@ -229,10 +252,23 @@ def main() -> None:
         choices=VARIANT_NAMES,
         default=list(VARIANT_NAMES),
     )
+    parser.add_argument(
+        "--num-predict",
+        type=_positive_int,
+        default=DEFAULT_BENCHMARK_NUM_PREDICT,
+        help="benchmark-only output-token limit (default: 2)",
+    )
+    parser.add_argument(
+        "--isolated",
+        action="store_true",
+        help="measure one selected variant without interleaving variants",
+    )
     args = parser.parse_args()
     results, summaries = run_benchmark(
         trials=args.trials,
         variants=tuple(args.variants),
+        num_predict=args.num_predict,
+        isolated=args.isolated,
     )
     print(json.dumps(
         {

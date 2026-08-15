@@ -138,7 +138,7 @@ def test_repeated_trials_rotate_deterministically(
     assert all(call["model"] == "sts-fast" for call in calls)
     assert all(call["temperature"] == 0.2 for call in calls)
     assert all(
-        call["num_predict"] == MENTOR_NUM_PREDICT
+        call["num_predict"] == prompt_benchmark.DEFAULT_BENCHMARK_NUM_PREDICT
         for call in calls[1:]
     )
 
