@@ -106,7 +106,7 @@ def log_experiment_from_cli() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python3 -m app.cli mentor|chat|agents|models|experiment|experiments|memory|clear|knowledge|tools|project|status")
+        print("Usage: sts mentor|chat|agents|models|experiment|experiments|memory|clear|knowledge|tools|project|status")
         return
 
     command = sys.argv[1]
@@ -117,7 +117,7 @@ def main() -> None:
 
     if command == "chat":
         if len(sys.argv) < 3:
-            print("Usage: python3 -m app.cli chat <agent_name>")
+            print("Usage: sts chat <agent_name>")
             return
         start_chat(sys.argv[2])
         return
@@ -155,7 +155,7 @@ def main() -> None:
     if command == "knowledge":
         query = " ".join(sys.argv[2:]).strip()
         if not query:
-            print("Usage: python3 -m app.cli knowledge <query>")
+            print("Usage: sts knowledge <query>")
             return
         print(search_knowledge(query) or "No knowledge found.")
         return

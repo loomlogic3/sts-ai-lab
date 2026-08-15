@@ -35,62 +35,64 @@ pytest
 
 ## CLI Commands
 
-The STS AI Engine CLI (`app.cli`) provides top-level subcommands:
+The STS AI Engine CLI installs the `sts` and `sts-ai-lab` command shortcuts when the package is installed with `pip install -e ".[dev]"`.
+
+You can also run the same commands with `python3 -m app.cli` if the package is not installed.
 
 ### Interactive Sessions
 - **Start STS Mentor**:
   ```bash
-  python3 -m app.cli mentor
+  sts mentor
   ```
 - **Chat with a Specific Agent** (`sts_mentor`, `code_agent`, `research_agent`):
   ```bash
-  python3 -m app.cli chat code_agent
+  sts chat code_agent
   ```
 
 ### Laboratory Inspection & Configuration
 - **Lab Status & Connectivity**:
   ```bash
-  python3 -m app.cli status
+  sts status
   ```
 - **List Available Agents**:
   ```bash
-  python3 -m app.cli agents
+  sts agents
   ```
 - **List Local Models**:
   ```bash
-  python3 -m app.cli models
+  sts models
   ```
 - **List In-Session Tools**:
   ```bash
-  python3 -m app.cli tools
+  sts tools
   ```
 - **Project Structure Summary**:
   ```bash
-  python3 -m app.cli project
+  sts project
   ```
 
 ### Memory & Knowledge Base
 - **View Saved Memory**:
   ```bash
-  python3 -m app.cli memory [agent_name]
+  sts memory [agent_name]
   ```
 - **Clear Persistent Memory**:
   ```bash
-  python3 -m app.cli clear [agent_name]
+  sts clear [agent_name]
   ```
 - **Search Knowledge Base**:
   ```bash
-  python3 -m app.cli knowledge "local AI stack"
+  sts knowledge "local AI stack"
   ```
 
 ### Experiment Logging
 - **Log an Experiment Note**:
   ```bash
-  python3 -m app.cli experiment
+  sts experiment
   ```
 - **List Logged Experiments**:
   ```bash
-  python3 -m app.cli experiments
+  sts experiments
   ```
 
 ---
