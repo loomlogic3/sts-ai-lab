@@ -203,3 +203,56 @@ def test_mentor_output_limit_and_memory_role_remain_intact(monkeypatch):
 
     assert captured["num_predict"] == mentor.MENTOR_NUM_PREDICT
     assert memory.messages[-1] == ("STS Mentor", "answer")
+
+
+def test_agent_runtime_passes_configured_model_not_resolved(monkeypatch):
+    """execute_model receives the agent's raw config model, not STS_MODEL override."""
+    captured = {}
+    monkeypatch.setattr(
+        agent_runtime,
+        "load_agent_definition",
+        lambda name: agent_definition(),
+    )
+    monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "")
+
+    def fake_execute_model(**kwargs):
+        captured.update(kwargs)
+        return ModelExecutionResult("answer", "success", 1)
+
+    monkeypatch.setattr(agent_runtime, "execute_model", fake_execute_model)
+
+    agent_runtime.execute_agent("code_agent", "hello", FakeMemory())
+
+    assert captured["model"] == "canonical-model"
+
+
+def test_agent_runtime_uses_resolved_model_from_execution_result(monkeypatch):
+    """When model_result.model differs from config, audit gets the resolved model."""
+    captured = {}
+    monkeypatch.setattr(
+        agent_runtime,
+        "load_agent_definition",
+        lambda name: agent_definition(),
+    )
+    monkeypatch.setattr(agent_runtime, "search_knowledge", lambda question: "")
+
+    def fake_execute_model(**kwargs):
+        return ModelExecutionResult(
+            response="answer",
+            status="success",
+            duration_ms=1,
+            provider="openai",
+            model="gpt-4o",
+        )
+
+    monkeypatch.setattr(agent_runtime, "execute_model", fake_execute_model)
+
+    def fake_audit(**kwargs):
+        captured["audit"] = kwargs
+
+    monkeypatch.setattr(agent_runtime, "write_audit_record", fake_audit)
+
+    result = agent_runtime.execute_agent_result("code_agent", "hello", FakeMemory())
+
+    assert result.model == "gpt-4o"
+    assert captured["audit"]["model"] == "gpt-4o"

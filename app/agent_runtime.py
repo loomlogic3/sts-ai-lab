@@ -11,7 +11,10 @@ from app.audit_log import write_audit_record
 from app.config import MAX_CONVERSATION_CHARS
 from app.knowledge_search import search_knowledge
 from app.memory import ConversationMemory
-from app.model_execution import ModelExecutionMetrics, execute_model
+from app.model_execution import (
+    ModelExecutionMetrics,
+    execute_model,
+)
 from app.prompt_builder import PromptProfile, build_prompt_result
 from app.response_processor import clean_response
 from app.runtime_status import (
@@ -160,7 +163,8 @@ def execute_agent_result(
             temperature=agent_definition["temperature"],
             num_predict=options.num_predict,
         )
-        _emit_status(on_status, "processing_response", agent_name, model)
+        active_model = model_result.model or model
+        _emit_status(on_status, "processing_response", agent_name, active_model)
         answer = clean_response(model_result.response)
         execution_profile = AgentExecutionProfile(
             prompt_profile=prompt_result.profile,
@@ -177,7 +181,7 @@ def execute_agent_result(
             _audit_execution(
                 started_at=started_at,
                 agent_name=agent_name,
-                model=model,
+                model=active_model,
                 status=model_result.status,
                 memory_persisted=False,
                 error_category=model_result.error_category,
@@ -185,17 +189,17 @@ def execute_agent_result(
             result = AgentRuntimeResult(
                 response=answer,
                 status=model_result.status,
-                model=model,
+                model=active_model,
                 memory_persisted=False,
                 error_category=model_result.error_category,
                 profile=execution_profile,
             )
-            _emit_status(on_status, model_result.status, agent_name, model)
+            _emit_status(on_status, model_result.status, agent_name, active_model)
             return result
 
         memory_persisted = False
         if options.persist_memory:
-            _emit_status(on_status, "saving_memory", agent_name, model)
+            _emit_status(on_status, "saving_memory", agent_name, active_model)
             memory.add("User", question)
             memory.add(options.memory_role or agent_name, answer)
             memory.save()
@@ -204,18 +208,18 @@ def execute_agent_result(
         _audit_execution(
             started_at=started_at,
             agent_name=agent_name,
-            model=model,
+            model=active_model,
             status="success",
             memory_persisted=memory_persisted,
         )
         result = AgentRuntimeResult(
             response=answer,
             status="success",
-            model=model,
+            model=active_model,
             memory_persisted=memory_persisted,
             profile=execution_profile,
         )
-        _emit_status(on_status, "complete", agent_name, model)
+        _emit_status(on_status, "complete", agent_name, active_model)
         return result
     except Exception:
         if model is not None:
