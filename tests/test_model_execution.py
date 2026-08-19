@@ -8,7 +8,17 @@ from app.cloud_model_client import CloudModelResult
 from app.ollama_client import OllamaResult
 
 
+def _unset_cloud_env(monkeypatch):
+    """Remove cloud provider env vars so tests route to Ollama."""
+    monkeypatch.delenv("STS_MODEL_PROVIDER", raising=False)
+    monkeypatch.delenv("STS_MODEL", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENCODE_API_KEY", raising=False)
+
+
 def test_model_execution_propagates_model_and_options(monkeypatch):
+    _unset_cloud_env(monkeypatch)
     captured = {}
 
     def fake_run_ollama_result(model, prompt, **options):
@@ -40,6 +50,7 @@ def test_model_execution_propagates_model_and_options(monkeypatch):
 
 
 def test_default_output_limit_remains_owned_by_ollama_client(monkeypatch):
+    _unset_cloud_env(monkeypatch)
     captured = {}
 
     def fake_run_ollama_result(model, prompt, **options):
@@ -62,6 +73,7 @@ def test_default_output_limit_remains_owned_by_ollama_client(monkeypatch):
 
 
 def test_model_execution_exposes_privacy_safe_metrics(monkeypatch):
+    _unset_cloud_env(monkeypatch)
     monkeypatch.setattr(
         model_execution,
         "run_ollama_result",
@@ -124,6 +136,7 @@ def test_model_execution_classifies_existing_ollama_outcomes(
     status,
     error_category,
 ):
+    _unset_cloud_env(monkeypatch)
     monkeypatch.setattr(
         model_execution,
         "run_ollama_result",
@@ -237,6 +250,7 @@ def test_cloud_model_errors_are_classified(monkeypatch):
 
 
 def test_unknown_provider_falls_back_to_ollama(monkeypatch):
+    _unset_cloud_env(monkeypatch)
     captured = {}
     monkeypatch.setenv("STS_MODEL_PROVIDER", "unknown-provider")
 
@@ -373,6 +387,7 @@ def test_opencode_uses_zen_default_base_url(monkeypatch):
 
 
 def test_sts_model_env_overrides_configured_model(monkeypatch):
+    _unset_cloud_env(monkeypatch)
     captured = {}
     monkeypatch.setenv("STS_MODEL", "env-override-model")
 
@@ -397,6 +412,7 @@ def test_sts_model_env_overrides_configured_model(monkeypatch):
 
 
 def test_without_sts_model_configured_model_is_used(monkeypatch):
+    _unset_cloud_env(monkeypatch)
     captured = {}
     monkeypatch.delenv("STS_MODEL", raising=False)
 
