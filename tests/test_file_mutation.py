@@ -618,6 +618,8 @@ def test_no_independent_privileged_file_writer_exists():
                 function_name = node.func.id
 
             if function_name in {"write_text", "write_bytes", "replace"}:
+                if function_name == "replace" and len(node.args) != 1:
+                    continue
                 if (
                     path.name not in persistence_modules
                     and path.name != "file_mutation.py"
