@@ -51,7 +51,7 @@ def index_python_file(
         if isinstance(node, ast.ImportFrom):
             imports.append(node.module or "")
 
-        if isinstance(node, ast.FunctionDef):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions.append(node.name)
 
         if isinstance(node, ast.ClassDef):

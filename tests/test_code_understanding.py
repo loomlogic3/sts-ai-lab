@@ -186,3 +186,44 @@ def test_existing_permissions_still_gate_explanation(monkeypatch):
 
     assert result == "Tool not allowed for agent: research_agent"
     assert handler_called is False
+
+
+def test_list_python_functions_detects_async_functions(monkeypatch):
+    source = """
+def sync_worker():
+    pass
+
+async def async_handler():
+    pass
+"""
+    monkeypatch.setattr(
+        code_understanding,
+        "read_file",
+        lambda path, workspace=None: source,
+    )
+
+    result = code_understanding.list_python_functions("example.py")
+    assert "- async_handler" in result
+    assert "- sync_worker" in result
+
+
+def test_explain_python_file_detects_async_functions(monkeypatch):
+    source = """
+import sys
+
+async def fetch_data():
+    pass
+
+class DataClient:
+    pass
+"""
+    monkeypatch.setattr(
+        code_understanding,
+        "read_file",
+        lambda path, workspace=None: source,
+    )
+
+    result = code_understanding.explain_python_file("example.py")
+    assert "- fetch_data" in result
+    assert "- DataClient" in result
+    assert "- sys" in result

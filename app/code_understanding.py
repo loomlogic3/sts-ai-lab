@@ -54,7 +54,7 @@ def explain_python_file(
             module = node.module or ""
             imports.append(module)
 
-        if isinstance(node, ast.FunctionDef):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions.append(node.name)
 
         if isinstance(node, ast.ClassDef):
@@ -184,7 +184,7 @@ def list_python_functions(
     functions = []
 
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions.append(node.name)
 
     if not functions:
