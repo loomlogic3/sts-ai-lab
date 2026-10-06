@@ -8,11 +8,36 @@ from pathlib import Path
 
 
 PROTECTED_WORKSPACE_PARTS = frozenset({
-    ".env",
+    ".aws",
+    ".azure",
+    ".docker",
+    ".gnupg",
     ".git",
+    ".kube",
+    ".ssh",
+    ".git-credentials",
+    ".netrc",
+    ".npmrc",
+    ".pypirc",
+    "credentials",
+    "id_ed25519",
+    "id_rsa",
+    "private_key",
+    "secrets",
     "__pycache__",
     "data",
 })
+
+
+def _is_protected_part(part: str) -> bool:
+    """Return whether one path component commonly contains credentials."""
+
+    normalized = part.lower()
+    return (
+        normalized in PROTECTED_WORKSPACE_PARTS
+        or normalized.startswith(".env")
+        or normalized.endswith((".key", ".pem", ".p12", ".pfx"))
+    )
 
 
 @dataclass(frozen=True)
@@ -43,7 +68,7 @@ class Workspace:
         raw_path = Path(path_text).expanduser()
         if raw_path.is_absolute() or ".." in raw_path.parts:
             return None
-        if any(part in PROTECTED_WORKSPACE_PARTS for part in raw_path.parts):
+        if any(_is_protected_part(part) for part in raw_path.parts):
             return None
 
         candidate = self.root / raw_path
@@ -53,7 +78,7 @@ class Workspace:
         except (OSError, RuntimeError, ValueError):
             return None
 
-        if any(part in PROTECTED_WORKSPACE_PARTS for part in relative.parts):
+        if any(_is_protected_part(part) for part in relative.parts):
             return None
         return resolved
 
@@ -68,7 +93,7 @@ class Workspace:
             return None
 
         if any(
-            part in PROTECTED_WORKSPACE_PARTS
+            _is_protected_part(part)
             for part in lexical_relative.parts
         ):
             return None
