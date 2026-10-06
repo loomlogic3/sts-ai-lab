@@ -1,3 +1,8 @@
+import json
+
+import pytest
+
+from app import agent_config
 from app.agent_config import load_agent_definition, list_agent_definitions, list_agent_names
 from app.agent_registry import list_agents, load_agent_prompt
 from app.agents import list_agents as list_agent_summaries
@@ -42,3 +47,27 @@ def test_all_agent_definitions_include_prompt_files():
 
     assert len(definitions) == 3
     assert all(definition["prompt"].endswith(".md") for definition in definitions)
+
+
+def test_agent_name_cannot_escape_agent_directory(tmp_path, monkeypatch):
+    agent_directory = tmp_path / "agents"
+    agent_directory.mkdir()
+    (tmp_path / "outside.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(agent_config, "AGENT_DIR", agent_directory)
+
+    with pytest.raises(ValueError, match="Invalid agent name"):
+        agent_config.load_agent_config("../outside")
+
+
+def test_configured_prompt_cannot_escape_agent_directory(tmp_path, monkeypatch):
+    agent_directory = tmp_path / "agents"
+    agent_directory.mkdir()
+    (agent_directory / "safe.json").write_text(
+        json.dumps({"prompt": "../outside.md"}),
+        encoding="utf-8",
+    )
+    (tmp_path / "outside.md").write_text("outside prompt", encoding="utf-8")
+    monkeypatch.setattr(agent_config, "AGENT_DIR", agent_directory)
+
+    with pytest.raises(ValueError, match="inside the agents directory"):
+        agent_config.load_agent_definition("safe")

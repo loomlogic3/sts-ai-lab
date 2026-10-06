@@ -3,6 +3,7 @@ Agent configuration loader.
 """
 
 import json
+import re
 from pathlib import Path
 
 AGENT_DIR = Path("agents")
@@ -10,6 +11,33 @@ DEFAULT_AGENT_MODEL = "llama3.2:1b"
 DEFAULT_AGENT_TEMPERATURE = 0.2
 DEFAULT_AGENT_DESCRIPTION = ""
 DEFAULT_ALLOWED_TOOLS: tuple[str, ...] = ()
+_AGENT_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
+
+
+def _agent_directory() -> Path:
+    return AGENT_DIR.resolve()
+
+
+def _validate_agent_name(agent_name: str) -> None:
+    if (
+        not isinstance(agent_name, str)
+        or _AGENT_NAME_PATTERN.fullmatch(agent_name) is None
+    ):
+        raise ValueError("Invalid agent name.")
+
+
+def _contained_agent_path(path: Path) -> Path:
+    """Resolve a path and reject files outside the agent directory."""
+
+    agent_directory = _agent_directory()
+    resolved = path.resolve()
+    try:
+        resolved.relative_to(agent_directory)
+    except ValueError as error:
+        raise ValueError(
+            "Agent files must stay inside the agents directory."
+        ) from error
+    return resolved
 
 
 def agent_prompt_path(agent_name: str, prompt_file: str | None = None) -> Path:
@@ -17,7 +45,10 @@ def agent_prompt_path(agent_name: str, prompt_file: str | None = None) -> Path:
     Return the prompt path for an agent definition.
     """
 
-    return AGENT_DIR / (prompt_file or f"{agent_name}.md")
+    _validate_agent_name(agent_name)
+    return _contained_agent_path(
+        _agent_directory() / (prompt_file or f"{agent_name}.md")
+    )
 
 
 def load_agent_config(agent_name: str) -> dict:
@@ -25,7 +56,8 @@ def load_agent_config(agent_name: str) -> dict:
     Load configuration for an AI agent.
     """
 
-    path = AGENT_DIR / f"{agent_name}.json"
+    _validate_agent_name(agent_name)
+    path = _contained_agent_path(_agent_directory() / f"{agent_name}.json")
 
     if not path.exists():
         return {
